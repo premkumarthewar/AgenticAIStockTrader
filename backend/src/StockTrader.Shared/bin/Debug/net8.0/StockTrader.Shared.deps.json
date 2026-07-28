@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "StockTrader.Shared/1.0.0": {
+        "runtime": {
+          "StockTrader.Shared.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "StockTrader.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

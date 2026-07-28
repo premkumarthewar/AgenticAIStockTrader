@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/backend/.vs
+/backend/src/StockTrader.AI/obj
+/backend/src/StockTrader.Api/obj
+/backend/src/StockTrader.Application/obj
+/backend/src/StockTrader.Contracts/obj
+/backend/src/StockTrader.Domain/obj
+/backend/src/StockTrader.Infrastructure/obj
+/backend/src/StockTrader.Persistence/obj
+/backend/src/StockTrader.Shared/obj
+/backend/tests/StockTrader.IntegrationTests/obj
+/backend/tests/StockTrader.UnitTests/obj
+/backend/src/StockTrader.AI/bin/Debug

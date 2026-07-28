@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "StockTrader.Infrastructure/1.0.0": {
+        "runtime": {
+          "StockTrader.Infrastructure.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "StockTrader.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

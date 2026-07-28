@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StockTrader.AI/StockTrader.AI.csproj" />
+    <Project Path="src/StockTrader.Api/StockTrader.Api.csproj" />
+    <Project Path="src/StockTrader.Application/StockTrader.Application.csproj" />
+    <Project Path="src/StockTrader.Contracts/StockTrader.Contracts.csproj" />
+    <Project Path="src/StockTrader.Domain/StockTrader.Domain.csproj" />
+    <Project Path="src/StockTrader.Infrastructure/StockTrader.Infrastructure.csproj" />
+    <Project Path="src/StockTrader.Persistence/StockTrader.Persistence.csproj" />
+    <Project Path="src/StockTrader.Shared/StockTrader.Shared.csproj" />
+  </Folder>
+</Solution>
