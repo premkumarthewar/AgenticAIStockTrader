@@ -10,4 +10,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\StockTrader.Contracts\StockTrader.Contracts.csproj" />
+    <ProjectReference Include="..\StockTrader.Domain\StockTrader.Domain.csproj" />
+    <ProjectReference Include="..\StockTrader.Shared\StockTrader.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\" />
+  </ItemGroup>
+
 </Project>

@@ -8,7 +8,25 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.78.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StockTrader.AI\StockTrader.AI.csproj" />
+    <ProjectReference Include="..\StockTrader.Application\StockTrader.Application.csproj" />
+    <ProjectReference Include="..\StockTrader.Contracts\StockTrader.Contracts.csproj" />
+    <ProjectReference Include="..\StockTrader.Infrastructure\StockTrader.Infrastructure.csproj" />
+    <ProjectReference Include="..\StockTrader.Persistence\StockTrader.Persistence.csproj" />
+    <ProjectReference Include="..\StockTrader.Shared\StockTrader.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Middleware\" />
+    <Folder Include="Filters\" />
+    <Folder Include="HealthChecks\" />
+    <Folder Include="Configurations\" />
   </ItemGroup>
 
 </Project>

@@ -8,6 +8,9 @@
     ".NETCoreApp,Version=v10.0": {
       "StockTrader.Application/1.0.0": {
         "dependencies": {
+          "StockTrader.Contracts": "1.0.0",
+          "StockTrader.Domain": "1.0.0",
+          "StockTrader.Shared": "1.0.0",
           "Swashbuckle.AspNetCore": "10.2.3"
         },
         "runtime": {
@@ -58,6 +61,41 @@
             "fileVersion": "10.2.3.2721"
           }
         }
+      },
+      "StockTrader.Contracts/1.0.0": {
+        "dependencies": {
+          "StockTrader.Shared": "1.0.0",
+          "Swashbuckle.AspNetCore": "10.2.3"
+        },
+        "runtime": {
+          "StockTrader.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "StockTrader.Domain/1.0.0": {
+        "dependencies": {
+          "StockTrader.Shared": "1.0.0",
+          "Swashbuckle.AspNetCore": "10.2.3"
+        },
+        "runtime": {
+          "StockTrader.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "StockTrader.Shared/1.0.0": {
+        "dependencies": {
+          "Swashbuckle.AspNetCore": "10.2.3"
+        },
+        "runtime": {
+          "StockTrader.Shared.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -101,6 +139,21 @@
       "sha512": "sha512-nthWONRs/FJ4yyG206g1cC52WEG8EqrjuMWjGdR+5XG7lbjFto6NqcI9EMICgVFom/UivIjUVwI76ZHbHwTPfQ==",
       "path": "swashbuckle.aspnetcore.swaggerui/10.2.3",
       "hashPath": "swashbuckle.aspnetcore.swaggerui.10.2.3.nupkg.sha512"
+    },
+    "StockTrader.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "StockTrader.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "StockTrader.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

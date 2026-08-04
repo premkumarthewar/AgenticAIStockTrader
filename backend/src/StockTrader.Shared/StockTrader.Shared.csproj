@@ -10,4 +10,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Helpers\" />
+    <Folder Include="Utilities\" />
+    <Folder Include="Errors\" />
+    <Folder Include="Constants\" />
+  </ItemGroup>
+
 </Project>
