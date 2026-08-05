@@ -20,7 +20,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddAI(builder.Configuration);
+builder.Services.AddArtificialIntelligence(builder.Configuration);
 
 builder.Services.Configure<AIOptions>(builder.Configuration.GetSection(AIOptions.SectionName));
 
