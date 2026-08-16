@@ -1,9 +1,10 @@
-﻿using StockTrader.Contracts.Responses;
+﻿using StockTrader.Contracts.Requests;
+using StockTrader.Contracts.Responses;
+using StockTrader.Shared.Results;
 
-namespace StockTrader.Application.Common.Interfaces
+namespace StockTrader.Application.Common.Interfaces;
+
+public interface ITradingAdvisorService
 {
-    public interface ITradingAdvisorService
-    {
-        Task<AnalyzeStockResponse> AnalyzeStockAsync(string symbol, CancellationToken cancellationToken = default);
-    }
+    Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default);
 }

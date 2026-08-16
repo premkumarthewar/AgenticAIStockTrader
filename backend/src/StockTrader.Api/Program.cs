@@ -1,7 +1,7 @@
 using StockTrader.AI;
 using StockTrader.AI.Agents;
 using StockTrader.AI.Options;
-using StockTrader.AI.Plugins;
+using StockTrader.AI.Plugins.CompanyProfile;
 using StockTrader.AI.Services;
 using StockTrader.Application;
 using StockTrader.Application.Common.Interfaces;

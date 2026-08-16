@@ -2,6 +2,7 @@
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
+using StockTrader.Shared.Results;
 
 namespace StockTrader.Api.Controllers;
 
@@ -12,7 +13,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
     [HttpPost("analyze")]
     public async Task<ActionResult<AnalyzeStockResponse>> Analyze(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {
-        AnalyzeStockResponse response = await tradingAdvisorService.AnalyzeStockAsync(analyzeStockRequest.Symbol, cancellationToken);
+        Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeMarketAsync(analyzeStockRequest, cancellationToken);
 
         return Ok(response);
     }

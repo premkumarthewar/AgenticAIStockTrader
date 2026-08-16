@@ -22,11 +22,8 @@
 
   <ItemGroup>
     <Folder Include="Memory\" />
-    <Folder Include="Plugins\CompanyProfile\" />
     <Folder Include="Plugins\Financials\" />
-    <Folder Include="Plugins\HistoricalPrice\" />
     <Folder Include="Plugins\News\" />
-    <Folder Include="Plugins\Quotes\" />
     <Folder Include="Reflections\" />
     <Folder Include="Planning\" />
   </ItemGroup>

@@ -16,4 +16,19 @@ public class KernelFactory(IOptions<AIOptions> options) : IKernelFactory
 
         return builder;
     }
+
+    public Microsoft.SemanticKernel.Kernel CreateKernel()
+    {
+        if (string.IsNullOrEmpty(options.ApiKey))
+            throw new InvalidOperationException("AI API key has not been configured");
+
+        if (string.IsNullOrEmpty(options.Model))
+            throw new InvalidOperationException("AI Model has not been configured");
+
+        IKernelBuilder builder = Microsoft.SemanticKernel.Kernel.CreateBuilder();
+
+        builder.AddOpenAIChatCompletion(modelId: options.Model, apiKey: options.ApiKey);
+
+        return builder.Build();
+    }
 }

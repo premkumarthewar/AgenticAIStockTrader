@@ -3,4 +3,6 @@
 public class AnalyzeStockRequest
 {
     public string Symbol { get; init; } = string.Empty;
+
+    public int TimeInterval { get; init; }
 }

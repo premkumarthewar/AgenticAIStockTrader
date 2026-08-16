@@ -8,38 +8,58 @@ using StockTrader.Shared.Results;
 
 namespace StockTrader.Infrastructure.MarketData;
 
-public sealed class StockMarketService : IStockMarketService
+public sealed class StockMarketService(
+    IFinnhubClient finnhubClient,
+    ILogger<StockMarketService> logger) : IStockMarketService
 {
-    private readonly IFinnhubClient _finnhubClient;
-    private readonly ILogger<StockMarketService> _logger;
-
-    public StockMarketService(
-        IFinnhubClient finnhubClient,
-        ILogger<StockMarketService> logger)
-    {
-        _finnhubClient = finnhubClient;
-        _logger = logger;
-    }
-
     public async Task<Result<CompanyProfileDto>> GetCompanyProfileAsync(
         string symbol,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation(
+        logger.LogInformation(
             "Getting company profile for {Symbol}",
             symbol);
 
-        FinnhubCompanyProfileResponse? response = await _finnhubClient.GetCompanyProfileAsync(
+        FinnhubCompanyProfileResponse? response = await finnhubClient.GetCompanyProfileAsync(
             symbol,
             cancellationToken);
 
         if (response is null || string.IsNullOrWhiteSpace(response.Ticker))
-        {
             return Result<CompanyProfileDto>.Failure(
                 new Error("CompanyNotFound", "Company profile not found."));
-        }
 
-        var dto = CompanyProfileMapper.Map(response);
+        CompanyProfileDto dto = CompanyProfileMapper.Map(response);
+
         return Result<CompanyProfileDto>.Success(dto);
+    }
+
+    public async Task<Result<StockQuoteDto>> GetQuoteAsync(
+    string symbol,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
+
+        return await finnhubClient.GetQuoteAsync(
+            symbol,
+            cancellationToken);
+    }
+
+    public async Task<Result<IReadOnlyList<HistoricalPriceDto>>> GetHistoricalPricesAsync(
+    string symbol,
+    DateTime from,
+    DateTime to,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
+
+        if (from > to)
+            return Result<IReadOnlyList<HistoricalPriceDto>>.Failure(new Error("InvalidDateRange",
+                "The start date cannot be later than the end date."));
+
+        return await finnhubClient.GetHistoricalPricesAsync(
+            symbol,
+            from,
+            to,
+            cancellationToken);
     }
 }
