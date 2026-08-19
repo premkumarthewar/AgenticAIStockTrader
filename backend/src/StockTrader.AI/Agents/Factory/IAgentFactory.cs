@@ -11,6 +11,8 @@ public interface IAgentFactory
 
     IResearchAgent CreateResearchAgent();
 
+    ITradingDecisionAgent CreateTradingDecisionAgent();
+
     IPortfolioAgent CreatePortfolioAgent();
 
     IRiskAgent CreateRiskAgent();

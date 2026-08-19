@@ -1,5 +1,6 @@
 ﻿using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
+using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
@@ -9,9 +10,10 @@ namespace StockTrader.AI.Services;
 
 public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator) : ITradingAdvisorService
 {
-    public async Task<Result<AnalyzeStockResponse>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<TradingDecisionDto>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(request.Symbol);
+        if (string.IsNullOrWhiteSpace(request.Symbol))
+            return Result<TradingDecisionDto>.Failure(new Error("BadRequest", "Stock symbol is required."));
 
         return await tradingOrchestrator.AnalyzeAsync(request, cancellationToken);
     }

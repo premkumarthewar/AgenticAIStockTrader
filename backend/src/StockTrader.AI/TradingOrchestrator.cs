@@ -3,18 +3,21 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Prompts;
+using StockTrader.Application.AI.Dtos;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
 using StockTrader.Shared.Results;
 
 namespace StockTrader.AI;
 
-public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent researchAgent, Microsoft.SemanticKernel.Kernel kernel) : ITradingOrchestrator
+public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent researchAgent, ITradingDecisionAgent tradingDecisionAgent, Microsoft.SemanticKernel.Kernel kernel) : ITradingOrchestrator
 {
-    public async Task<Result<AnalyzeStockResponse>> AnalyzeAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default)
+    public async Task<Result<TradingDecisionDto>> AnalyzeAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(analyzeStockRequest.Symbol);
-
+        if (string.IsNullOrWhiteSpace(analyzeStockRequest.Symbol))
+        {
+            return Result<TradingDecisionDto>.Failure(new Error("BadRequest", "Stock symbol is required."));
+        }
         string normalizedSymbol = analyzeStockRequest.Symbol.Trim().ToUpperInvariant();
 
         try
@@ -28,17 +31,24 @@ public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent
             Result<string> marketResult = await marketTask;
 
             if (marketResult.IsFailure)
-                return Result<AnalyzeStockResponse>.Failure(new Error("InternalServerError", $"Market analysis failed: {marketResult.Error}"));
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Market analysis failed: {marketResult.Error}"));
 
             Result<string> researchResult = await researchTask;
 
             if (researchResult.IsFailure)
-                return Result<AnalyzeStockResponse>.Failure(new Error("InternalServerError", $"Company research failed: {researchResult.Error}"));
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Company research failed: {researchResult.Error}"));
 
-            return Result<AnalyzeStockResponse>.Success(new AnalyzeStockResponse
-            {
-                Analysis = SynthesizeAsync(normalizedSymbol, marketResult.Value, researchResult.Value, cancellationToken).Result.Value
-            });
+            Result<string> synthesisResult = await SynthesizeAsync(normalizedSymbol, marketResult.Value, researchResult.Value, cancellationToken);
+
+            if (synthesisResult.IsFailure)
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Anlysis synthesis failed: {synthesisResult.Error}"));
+
+            Result<TradingDecisionDto> decisionResult = await tradingDecisionAgent.DecideAsync(normalizedSymbol, synthesisResult.Value, cancellationToken);
+
+            if (decisionResult.IsFailure)
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Trading decision generation failed: {decisionResult.Error}"));
+
+            return decisionResult;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -46,7 +56,7 @@ public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent
         }
         catch (Exception ex)
         {
-            return Result<AnalyzeStockResponse>.Failure(new Error("InternalServerError", $"Unable to complete trading analysis for {normalizedSymbol}: {ex.Message}"));
+            return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Unable to complete trading analysis for {normalizedSymbol}: {ex.Message}"));
         }
     }
 

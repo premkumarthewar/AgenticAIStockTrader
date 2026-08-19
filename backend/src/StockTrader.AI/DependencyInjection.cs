@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<IMarketAgent, MarketAgent>();
         services.AddScoped<IResearchAgent, ResearchAgent>();
 
+        services.AddScoped<ITradingDecisionAgent, TradingDecisionAgent>();
+
         services.AddScoped<IAgentFactory, AgentFactory>();
 
         services.AddScoped<ITradingOrchestrator, TradingOrchestrator>();

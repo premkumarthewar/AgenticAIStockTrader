@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
@@ -10,19 +11,21 @@ namespace StockTrader.Api.Controllers;
 [Route("api/ai")]
 public class AIController(ITradingAdvisorService tradingAdvisorService) : ControllerBase
 {
-    [HttpGet("analyze")]
-    public async Task<ActionResult<AnalyzeStockResponse>> Analyze(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
+    [HttpGet("decision")]
+    [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Decision([FromQuery] AnalyzeStockRequest request, CancellationToken cancellationToken)
     {
-        Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeAsync(analyzeStockRequest, cancellationToken);
+        Result<TradingDecisionDto> result = await tradingAdvisorService.AnalyzeAsync(request, cancellationToken);
 
-        if (response.IsFailure)
-            return BadRequest(response);
+        if (result.IsFailure)
+            return BadRequest(result);
 
-        return Ok(response);
+        return Ok(result);
     }
 
     [HttpGet("market-analysis")]
-    public async Task<ActionResult<AnalyzeStockResponse>> Market(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnalyzeStockResponse>> Market([FromQuery]AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {
         Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeMarketAsync(analyzeStockRequest, cancellationToken);
 

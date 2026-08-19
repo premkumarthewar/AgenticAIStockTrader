@@ -8,6 +8,7 @@ namespace StockTrader.AI.Agents.Factory;
 public sealed class AgentFactory(
     IMarketAgent marketAgent,
     IResearchAgent researchAgent,
+    ITradingDecisionAgent tradingDecisionAgent,
     IPortfolioAgent portfolioAgent,
     IRiskAgent riskAgent,
     IExecutionAgent executionAgent,
@@ -15,6 +16,7 @@ public sealed class AgentFactory(
 {
     public IMarketAgent CreateMarketAgent() => marketAgent;
     public IResearchAgent CreateResearchAgent() => researchAgent;
+    public ITradingDecisionAgent CreateTradingDecisionAgent() => tradingDecisionAgent;
     public IPortfolioAgent CreatePortfolioAgent() => portfolioAgent;
     public IRiskAgent CreateRiskAgent() => riskAgent;
     public IExecutionAgent CreateExecutionAgent() => executionAgent;
