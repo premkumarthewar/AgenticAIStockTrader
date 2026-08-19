@@ -14,6 +14,8 @@ using StockTrader.AI.Plugins.Financials;
 using StockTrader.AI.Plugins.HistoricalPrice;
 using StockTrader.AI.Plugins.News;
 using StockTrader.AI.Plugins.Quotes;
+using StockTrader.AI.Services;
+using StockTrader.Application.Common.Interfaces;
 
 namespace StockTrader.AI;
 
@@ -56,11 +58,15 @@ public static class DependencyInjection
 
         services.AddScoped<IAgentFactory, AgentFactory>();
 
+        services.AddScoped<ITradingOrchestrator, TradingOrchestrator>();
+
+        services.AddScoped<ITradingAdvisorService, TradingAdvisorService>();
+
         // services.AddScoped<IResearchAgent, ResearchAgent>();
         // services.AddScoped<IPortfolioAgent, PortfolioAgent>();
         // services.AddScoped<IRiskAgent, RiskAgent>();
         // services.AddScoped<IExecutionAgent, ExecutionAgent>();
-        // services.AddScoped<IOrchestratorAgent, OrchestratorAgent>();
+
 
         return services;
     }

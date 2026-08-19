@@ -7,8 +7,15 @@ using StockTrader.Shared.Results;
 
 namespace StockTrader.AI.Services;
 
-public class TradingAdvisorService(IAgentFactory agentFactory) : ITradingAdvisorService
+public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator) : ITradingAdvisorService
 {
+    public async Task<Result<AnalyzeStockResponse>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(request.Symbol);
+
+        return await tradingOrchestrator.AnalyzeAsync(request, cancellationToken);
+    }
+
     public async Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
         IMarketAgent marketAgent = agentFactory.CreateMarketAgent();
@@ -28,7 +35,7 @@ public class TradingAdvisorService(IAgentFactory agentFactory) : ITradingAdvisor
 
         IResearchAgent researchAgent = agentFactory.CreateResearchAgent();
 
-        Result<string> research = await researchAgent.ResearchAsync(request.Symbol, cancellationToken);
+        Result<string> research = await researchAgent.ResearchAsync(request, cancellationToken);
 
         return Result<AnalyzeStockResponse>.Success(new AnalyzeStockResponse
         {

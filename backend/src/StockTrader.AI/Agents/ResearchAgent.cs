@@ -8,6 +8,7 @@ using StockTrader.AI.Plugins.CompanyProfile;
 using StockTrader.AI.Plugins.Financials;
 using StockTrader.AI.Plugins.News;
 using StockTrader.AI.Prompts;
+using StockTrader.Contracts.Requests;
 using StockTrader.Shared.Results;
 
 namespace StockTrader.AI.Agents;
@@ -25,12 +26,12 @@ public class ResearchAgent : AgentBase, IResearchAgent
         Kernel.Plugins.AddFromObject(newsPlugin, "News");
     }
 
-    public async Task<Result<string>> ResearchAsync(string symbol, CancellationToken cancellationToken = default)
+    public async Task<Result<string>> ResearchAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(symbol))
+        if (string.IsNullOrEmpty(analyzeStockRequest.Symbol))
             return Result<string>.Failure(new Error("BadRequest", "Stock symbol is required"));
 
-        string normalizedSymbol = symbol.Trim().ToUpperInvariant();
+        string normalizedSymbol = analyzeStockRequest.Symbol.Trim().ToUpperInvariant();
 
         try
         {
@@ -44,7 +45,7 @@ public class ResearchAgent : AgentBase, IResearchAgent
 
             DateTime newsFrom = DateTime.UtcNow.Date.AddDays(-30);
 
-            ResearchPrompt researchPrompt = new(symbol, newsFrom, DateTime.UtcNow.Date);
+            ResearchPrompt researchPrompt = new(analyzeStockRequest.Symbol, newsFrom, DateTime.UtcNow.Date);
 
             chatHistory.AddUserMessage(researchPrompt.UserPrompt);
 

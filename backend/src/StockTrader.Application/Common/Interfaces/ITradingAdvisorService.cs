@@ -6,6 +6,8 @@ namespace StockTrader.Application.Common.Interfaces;
 
 public interface ITradingAdvisorService
 {
+    Task<Result<AnalyzeStockResponse>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default);
+
     Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default);
 
     Task<Result<AnalyzeStockResponse>> ResearchAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default);
