@@ -10,10 +10,21 @@ namespace StockTrader.Api.Controllers;
 [Route("api/ai")]
 public class AIController(ITradingAdvisorService tradingAdvisorService) : ControllerBase
 {
-    [HttpPost("analyze")]
+    [HttpGet("market-analysis")]
     public async Task<ActionResult<AnalyzeStockResponse>> Analyze(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {
         Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeMarketAsync(analyzeStockRequest, cancellationToken);
+
+        return Ok(response);
+    }
+
+    [HttpGet("research")]
+    public async Task<ActionResult<AnalyzeStockResponse>> Research(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
+    {
+        Result<AnalyzeStockResponse> response = await tradingAdvisorService.ResearchAsync(analyzeStockRequest, cancellationToken);
+
+        if (response.IsFailure)
+            return BadRequest(response);
 
         return Ok(response);
     }

@@ -20,4 +20,19 @@ public class TradingAdvisorService(IAgentFactory agentFactory) : ITradingAdvisor
             Analysis = analysis.Value
         });
     }
+
+    public async Task<Result<AnalyzeStockResponse>> ResearchAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(request.Symbol))
+            return Result<AnalyzeStockResponse>.Failure(new Error("BadRequest", "Stock symbol is required"));
+
+        IResearchAgent researchAgent = agentFactory.CreateResearchAgent();
+
+        Result<string> research = await researchAgent.ResearchAsync(request.Symbol, cancellationToken);
+
+        return Result<AnalyzeStockResponse>.Success(new AnalyzeStockResponse
+        {
+            Analysis = research.Value
+        });
+    }
 }

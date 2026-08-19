@@ -1,11 +1,10 @@
-﻿using System.Linq.Expressions;
-using System.Net.Http.Json;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StockTrader.Application.MarketData.Dtos;
 using StockTrader.Infrastructure.Clients.Finnhub.Models;
 using StockTrader.Infrastructure.Options;
 using StockTrader.Shared.Results;
+using System.Net.Http.Json;
 
 namespace StockTrader.Infrastructure.Clients.Finnhub;
 
@@ -40,9 +39,7 @@ public sealed class FinnhubClient : IFinnhubClient
             "Retrieving company profile from Finnhub for symbol {Symbol}",
             symbol);
 
-        using HttpResponseMessage response = await _httpClient.GetAsync(
-            requestUri,
-            cancellationToken);
+        using HttpResponseMessage response = await _httpClient.GetAsync(requestUri, cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
@@ -174,6 +171,95 @@ public sealed class FinnhubClient : IFinnhubClient
         {
             return Result<IReadOnlyList<HistoricalPriceDto>>.Failure(
             new Error("Exception", $"An error occurred while retrieving historical prices for {symbol}: {ex.Message}"));
+        }
+    }
+
+    public async Task<Result<FinancialsDto>> GetFinancialsAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(symbol);
+
+        string normalizedSymbol = symbol.Trim().ToUpperInvariant();
+
+        try
+        {
+            string requestUri = $"stock/metric" + $"?symbol={Uri.EscapeDataString(normalizedSymbol)}" + $"&metric=all" + $"&token={_options.ApiKey}";
+
+            FinnhubMetricsResponse? response =
+            await _httpClient.GetFromJsonAsync<FinnhubMetricsResponse>(requestUri, cancellationToken);
+
+            if (response?.Metric is null)
+                return Result<FinancialsDto>.Failure(new Error("NotFound", $"Finnhub returned no financial information for {normalizedSymbol}"));
+
+            FinancialsDto financials = new()
+            {
+                Symbol = normalizedSymbol,
+                EarningsPerShare = response.Metric.EpsAnnual,
+                GrossMargin = response.Metric.GrossMarginAnnual,
+                OperatingMargin = response.Metric.OperatingMarginAnnual,
+                NetMargin = response.Metric.NetProfitMarginAnnual,
+                ReturnOnEquity = response.Metric.NetProfitMarginAnnual,
+                ReturnOnAssets = response.Metric.RoaAnnual,
+                DebtToEquity = response.Metric.TotalDebtToEquityAnnual
+            };
+
+            return Result<FinancialsDto>.Success(financials);
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<FinancialsDto>.Failure(new Error("InternalServerError", $"Unable to retrieve financial information for {normalizedSymbol}: {ex.Message}"));
+        }
+        catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return Result<FinancialsDto>.Failure(new Error("InternalServerError", $"An error occurred while retrieving financial information for {normalizedSymbol}: {ex.Message}"));
+        }
+    }
+
+    public async Task<Result<IReadOnlyList<NewsArticleDto>>> GetNewsAsync(string symbol, DateTime from, DateTime to, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(symbol);
+
+        if (from > to)
+            return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("InvalidDateRange", "Start date cannot be greater than End date"));
+
+        string normalizedSymbol = symbol.Trim().ToUpperInvariant();
+
+        try
+        {
+            string requestUri = $"company-news" + $"?symbol={Uri.EscapeDataString(normalizedSymbol)}" + $"&from={from}" + $"&to={to}" + $"&token={_options.ApiKey}";
+
+            List<FinnhubNewsResponse>? response = await _httpClient.GetFromJsonAsync<List<FinnhubNewsResponse>>(requestUri, cancellationToken);
+
+            if (response is null)
+                return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("NotFound", $"Finnhub returned no news for {normalizedSymbol}"));
+
+            List<NewsArticleDto> news = [.. response.Select(article => new NewsArticleDto
+            {
+                Headline = article.Headline ?? string.Empty,
+                Summary = article.Summary,
+                Source = article.Source,
+                Url = article.Url,
+                PublishedAt = article.Datetime > 0 ? DateTimeOffset.FromUnixTimeSeconds(article.Datetime).UtcDateTime : DateTime.MinValue,
+                Category = article.Category,
+                RelatedSymbol = normalizedSymbol
+            }).Where(article => !string.IsNullOrEmpty(article.Headline))];
+
+            return Result<IReadOnlyList<NewsArticleDto>>.Success(news);
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("InternalServerError", $"Unable to retrieve news for {normalizedSymbol}: {ex.Message}"));
+        }
+        catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("InternalServerError", $"An error occurred while retrieving news for {normalizedSymbol}: {ex.Message}"));
         }
     }
 }

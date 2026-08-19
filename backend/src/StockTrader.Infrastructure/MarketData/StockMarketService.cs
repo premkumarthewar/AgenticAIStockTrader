@@ -62,4 +62,23 @@ public sealed class StockMarketService(
             to,
             cancellationToken);
     }
+
+    public async Task<Result<FinancialsDto>> GetFinancialsAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(symbol))
+            return Result<FinancialsDto>.Failure(new Error("BadRequest", "Stock symbol is required"));
+
+        return await finnhubClient.GetFinancialsAsync(symbol, cancellationToken);
+    }
+
+    public async Task<Result<IReadOnlyList<NewsArticleDto>>> GetNewsAsync(string symbol, DateTime from, DateTime to, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(symbol))
+            return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("BadRequest", "Stock symbol is required"));
+
+        if (from > to)
+            return Result<IReadOnlyList<NewsArticleDto>>.Failure(new Error("InvalidDateRange", "Start date cannot be greater than end date"));
+
+        return await finnhubClient.GetNewsAsync(symbol, from, to, cancellationToken);
+    }
 }

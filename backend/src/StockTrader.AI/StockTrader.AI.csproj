@@ -22,8 +22,6 @@
 
   <ItemGroup>
     <Folder Include="Memory\" />
-    <Folder Include="Plugins\Financials\" />
-    <Folder Include="Plugins\News\" />
     <Folder Include="Reflections\" />
     <Folder Include="Planning\" />
   </ItemGroup>
