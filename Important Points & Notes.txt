@@ -1,3 +1,7 @@
 20th August 2026:
+Open AI API Key: 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
+
+Finnhub API Key: 
+
 Code changes completed till Milestone 5 - Agent Orchestration.
 Application runs successfully but unable to load localhost. Need to debug the issue.
