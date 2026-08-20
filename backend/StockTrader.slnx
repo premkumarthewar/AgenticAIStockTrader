@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <File Path="Important Points &amp; Notes.txt" />
     <Project Path="src/StockTrader.AI/StockTrader.AI.csproj" />
     <Project Path="src/StockTrader.Api/StockTrader.Api.csproj" />
     <Project Path="src/StockTrader.Application/StockTrader.Application.csproj" />

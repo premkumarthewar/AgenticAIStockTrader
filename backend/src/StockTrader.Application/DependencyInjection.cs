@@ -10,7 +10,6 @@ public static class DependencyInjection
         // FluentValidation
         // AutoMapper
         // Application Services
-
         return services;
     }
 }

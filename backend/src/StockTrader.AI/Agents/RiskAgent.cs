@@ -1,4 +1,7 @@
+using StockTrader.AI.Agents.Interfaces;
+
 namespace StockTrader.AI.Agents;
-public class RiskAgent
+
+public class RiskAgent : IRiskAgent
 {
 }

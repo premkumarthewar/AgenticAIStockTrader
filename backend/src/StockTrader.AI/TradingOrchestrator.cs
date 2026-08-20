@@ -5,7 +5,6 @@ using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Prompts;
 using StockTrader.Application.AI.Dtos;
 using StockTrader.Contracts.Requests;
-using StockTrader.Contracts.Responses;
 using StockTrader.Shared.Results;
 
 namespace StockTrader.AI;

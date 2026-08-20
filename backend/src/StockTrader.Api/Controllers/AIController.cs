@@ -8,7 +8,7 @@ using StockTrader.Shared.Results;
 namespace StockTrader.Api.Controllers;
 
 [ApiController]
-[Route("api/ai")]
+[Route("api/[controller]")]
 public class AIController(ITradingAdvisorService tradingAdvisorService) : ControllerBase
 {
     [HttpGet("decision")]
