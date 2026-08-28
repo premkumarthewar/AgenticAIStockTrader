@@ -44,4 +44,11 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
             Analysis = research.Value
         });
     }
+
+    public async Task<Result<PortfolioRecommendationDto>> AnalyzePortfolioAsync(PortfolioAnalysisRequestDto request, CancellationToken cancellationToken = default)
+    {
+        IPortfolioAgent portfolioAgent = agentFactory.CreatePortfolioAgent();
+
+        return await portfolioAgent.AnalyzeAsync(request, cancellationToken);
+    }
 }

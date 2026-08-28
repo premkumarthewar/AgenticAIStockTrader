@@ -25,7 +25,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
     }
 
     [HttpGet("market-analysis")]
-    public async Task<ActionResult<AnalyzeStockResponse>> Market([FromQuery]AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnalyzeStockResponse>> Market([FromQuery] AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {
         Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeMarketAsync(analyzeStockRequest, cancellationToken);
 
@@ -42,4 +42,18 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
 
         return Ok(response);
     }
+
+    [HttpPost("portfolio-analysis")]
+    [ProducesResponseType(typeof(Result<PortfolioRecommendationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<PortfolioRecommendationDto>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PortfolioAnalysis([FromBody] PortfolioAnalysisRequestDto request, CancellationToken cancellationToken)
+    {
+        Result<PortfolioRecommendationDto> result = await tradingAdvisorService.AnalyzePortfolioAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
 }

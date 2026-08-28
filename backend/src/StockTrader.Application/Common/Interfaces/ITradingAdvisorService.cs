@@ -12,4 +12,6 @@ public interface ITradingAdvisorService
     Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default);
 
     Task<Result<AnalyzeStockResponse>> ResearchAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default);
+
+    Task<Result<PortfolioRecommendationDto>> AnalyzePortfolioAsync(PortfolioAnalysisRequestDto request, CancellationToken cancellationToken = default);
 }
