@@ -25,17 +25,9 @@ public sealed class MarketAgent : AgentBase, IMarketAgent
         ArgumentNullException.ThrowIfNull(stockQuotePlugin);
         ArgumentNullException.ThrowIfNull(historicalPricePlugin);
 
-        Kernel.Plugins.AddFromObject(
-            companyProfilePlugin,
-            "CompanyProfile");
-
-        Kernel.Plugins.AddFromObject(
-            stockQuotePlugin,
-            "Quotes");
-
-        Kernel.Plugins.AddFromObject(
-            historicalPricePlugin,
-            "HistoricalPrice");
+        RegisterPluginIfMissing("CompanyProfile", companyProfilePlugin);
+        RegisterPluginIfMissing("Quotes", stockQuotePlugin);
+        RegisterPluginIfMissing("HistoricalPrice", historicalPricePlugin);
     }
 
     public async Task<Result<string>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken)

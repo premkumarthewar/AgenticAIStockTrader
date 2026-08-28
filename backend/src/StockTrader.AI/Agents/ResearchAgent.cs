@@ -21,9 +21,9 @@ public class ResearchAgent : AgentBase, IResearchAgent
         ArgumentNullException.ThrowIfNull(financialsPlugin);
         ArgumentNullException.ThrowIfNull(newsPlugin);
 
-        Kernel.Plugins.AddFromObject(companyProfilePlugin, "CompanyProfile");
-        Kernel.Plugins.AddFromObject(financialsPlugin, "Financials");
-        Kernel.Plugins.AddFromObject(newsPlugin, "News");
+        RegisterPluginIfMissing("CompanyProfile", companyProfilePlugin);
+        RegisterPluginIfMissing("Financials", financialsPlugin);
+        RegisterPluginIfMissing("News", newsPlugin);
     }
 
     public async Task<Result<string>> ResearchAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default)

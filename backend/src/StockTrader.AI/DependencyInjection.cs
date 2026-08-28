@@ -31,7 +31,7 @@ public static class DependencyInjection
         services.Configure<AIOptions>(configuration.GetSection(AIOptions.SectionName));
 
         //2. Kernel
-        //services.AddSingleton<IKernelFactory, KernelFactory>();
+        services.AddSingleton<IKernelFactory, KernelFactory>();
         services.AddSingleton(serviceProvider =>
         {
             AIOptions options = serviceProvider.GetRequiredService<IOptions<AIOptions>>().Value;
