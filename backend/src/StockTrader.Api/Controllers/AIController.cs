@@ -56,4 +56,14 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
         return Ok(result);
     }
 
+    [HttpPost("watchlist-analysis")]
+    public async Task<IActionResult> WatchlistAnalysis([FromBody] WatchlistDto request, CancellationToken cancellationToken)
+    {
+        Task<Result<WatchlistAnalysisDto>> result = tradingAdvisorService.AnalyzeWatchlistAsync(request, cancellationToken);
+
+        if (result.IsFaulted)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
 }

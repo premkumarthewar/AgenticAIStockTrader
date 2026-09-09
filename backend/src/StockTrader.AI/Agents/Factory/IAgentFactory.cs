@@ -20,4 +20,6 @@ public interface IAgentFactory
     IExecutionAgent CreateExecutionAgent();
 
     ITradingOrchestrator CreateTradingOrchestrator();
+
+    IWatchlistAgent CreateWatchlistAgent();
 }

@@ -51,4 +51,11 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
 
         return await portfolioAgent.AnalyzeAsync(request, cancellationToken);
     }
+
+    public async Task<Result<WatchlistAnalysisDto>> AnalyzeWatchlistAsync(WatchlistDto request, CancellationToken cancellationToken = default)
+    {
+        IWatchlistAgent watchlistAgent = agentFactory.CreateWatchlistAgent();
+
+        return await watchlistAgent.AnalyzeAsync(request, cancellationToken);
+    }
 }

@@ -12,7 +12,8 @@ public sealed class AgentFactory(
     IPortfolioAgent portfolioAgent,
     IRiskAgent riskAgent,
     IExecutionAgent executionAgent,
-    ITradingOrchestrator tradingOrchestrator) : IAgentFactory
+    ITradingOrchestrator tradingOrchestrator,
+    IWatchlistAgent watchlistAgent) : IAgentFactory
 {
     public IMarketAgent CreateMarketAgent() => marketAgent;
     public IResearchAgent CreateResearchAgent() => researchAgent;
@@ -21,4 +22,5 @@ public sealed class AgentFactory(
     public IRiskAgent CreateRiskAgent() => riskAgent;
     public IExecutionAgent CreateExecutionAgent() => executionAgent;
     public ITradingOrchestrator CreateTradingOrchestrator() => tradingOrchestrator;
+    public IWatchlistAgent CreateWatchlistAgent() => watchlistAgent;
 }

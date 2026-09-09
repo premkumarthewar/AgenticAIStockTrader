@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Memory\" />
     <Folder Include="Reflections\" />
     <Folder Include="Planning\" />
   </ItemGroup>

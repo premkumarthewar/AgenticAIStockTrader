@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IPortfolioAgent, PortfolioAgent>();
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IExecutionAgent, ExecutionAgent>();
+        services.AddScoped<IWatchlistAgent, WatchlistAgent>();
 
         //6. Agent Factory
         services.AddScoped<IAgentFactory, AgentFactory>();
