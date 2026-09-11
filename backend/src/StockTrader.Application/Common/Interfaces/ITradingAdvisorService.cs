@@ -16,4 +16,6 @@ public interface ITradingAdvisorService
     Task<Result<PortfolioRecommendationDto>> AnalyzePortfolioAsync(PortfolioAnalysisRequestDto request, CancellationToken cancellationToken = default);
 
     Task<Result<WatchlistAnalysisDto>> AnalyzeWatchlistAsync(WatchlistDto request, CancellationToken cancellationToken = default);
+
+    Task<Result<MemoryResponseDto>> GetMemoryAsync(string symbol, CancellationToken cancellationToken = default);
 }

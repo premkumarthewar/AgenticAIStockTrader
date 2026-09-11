@@ -7,6 +7,7 @@ using StockTrader.AI.Plugins.CompanyProfile;
 using StockTrader.AI.Plugins.HistoricalPrice;
 using StockTrader.AI.Plugins.Quotes;
 using StockTrader.AI.Prompts;
+using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Shared.Results;
 
@@ -14,13 +15,18 @@ namespace StockTrader.AI.Agents;
 
 public sealed class MarketAgent : AgentBase, IMarketAgent
 {
+    private readonly IMemoryService memoryService;
+
     public MarketAgent(
         AgentContext context,
+        IMemoryService memoryService,
         CompanyProfilePlugin companyProfilePlugin,
         StockQuotePlugin stockQuotePlugin,
         HistoricalPricePlugin historicalPricePlugin)
         : base(context)
     {
+        this.memoryService = memoryService;
+
         ArgumentNullException.ThrowIfNull(companyProfilePlugin);
         ArgumentNullException.ThrowIfNull(stockQuotePlugin);
         ArgumentNullException.ThrowIfNull(historicalPricePlugin);
@@ -44,7 +50,9 @@ public sealed class MarketAgent : AgentBase, IMarketAgent
                 FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
             };
 
-            MarketPrompt marketPrompt = new(request.Symbol, request.TimeInterval);
+            string memoryContext = await memoryService.GetMemoryContextAsync(normalizedSymbol, 10, cancellationToken);
+
+            MarketPrompt marketPrompt = new(request.Symbol, request.TimeInterval, memoryContext);
 
             string prompt = marketPrompt.SystemPrompt;
 

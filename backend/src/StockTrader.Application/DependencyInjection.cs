@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using StockTrader.Application.Common.Interfaces;
 
 namespace StockTrader.Application;
 

@@ -3,12 +3,14 @@
 /// <summary>
 /// System prompt for the Market Agent.
 /// </summary>
-public class MarketPrompt(string symbol, int timeInterval)
+public class MarketPrompt(string symbol, int timeInterval, string memoryContext)
 {
     public string SystemPrompt = $"""
 You are an experienced stock market analyst.
 
 Your primary responsibility is to analyze the stock {symbol} based on real-time market data obtained through available tools.
+
+Previous Analysis History: {memoryContext}.
 
 Your objectives are:
 

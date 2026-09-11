@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\StockTrader.Application\StockTrader.Application.csproj" />
     <ProjectReference Include="..\StockTrader.Domain\StockTrader.Domain.csproj" />
     <ProjectReference Include="..\StockTrader.Shared\StockTrader.Shared.csproj" />
   </ItemGroup>
@@ -21,7 +22,6 @@
     <Folder Include="Repositories\" />
     <Folder Include="Migrations\" />
     <Folder Include="Seed\" />
-    <Folder Include="Configurations\" />
   </ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@ namespace StockTrader.AI.Prompts;
 /// <summary>
 /// System prompt for the Research Agent.
 /// </summary>
-public class ResearchPrompt(string symbol, DateTime from, DateTime to)
+public class ResearchPrompt(string symbol, DateTime from, DateTime to, string memoryContext)
 {
     public const string SystemPrompt = """
 You are a senior equity research analyst.
@@ -33,6 +33,8 @@ Your role is company research only.
 
     public string UserPrompt = $"""
         Perform a fundamental research analysis of {symbol}.
+
+        Here is the previous research history: {memoryContext}.
 
                 Retrieve the following information using the available tools:
 

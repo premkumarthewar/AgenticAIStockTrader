@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -8,6 +9,7 @@ using StockTrader.AI.Plugins.CompanyProfile;
 using StockTrader.AI.Plugins.Financials;
 using StockTrader.AI.Plugins.News;
 using StockTrader.AI.Prompts;
+using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Shared.Results;
 
@@ -15,8 +17,12 @@ namespace StockTrader.AI.Agents;
 
 public class ResearchAgent : AgentBase, IResearchAgent
 {
-    public ResearchAgent(AgentContext context, CompanyProfilePlugin companyProfilePlugin, FinancialsPlugin financialsPlugin, NewsPlugin newsPlugin) : base(context)
+    private readonly IMemoryService memoryService;
+
+    public ResearchAgent(AgentContext context, IMemoryService memoryService, CompanyProfilePlugin companyProfilePlugin, FinancialsPlugin financialsPlugin, NewsPlugin newsPlugin) : base(context)
     {
+        this.memoryService = memoryService;
+
         ArgumentNullException.ThrowIfNull(companyProfilePlugin);
         ArgumentNullException.ThrowIfNull(financialsPlugin);
         ArgumentNullException.ThrowIfNull(newsPlugin);
@@ -45,7 +51,9 @@ public class ResearchAgent : AgentBase, IResearchAgent
 
             DateTime newsFrom = DateTime.UtcNow.Date.AddDays(-30);
 
-            ResearchPrompt researchPrompt = new(analyzeStockRequest.Symbol, newsFrom, DateTime.UtcNow.Date);
+            string memoryContext = await memoryService.GetMemoryContextAsync(normalizedSymbol, 10, cancellationToken);
+
+            ResearchPrompt researchPrompt = new(analyzeStockRequest.Symbol, newsFrom, DateTime.UtcNow.Date, memoryContext);
 
             chatHistory.AddUserMessage(researchPrompt.UserPrompt);
 

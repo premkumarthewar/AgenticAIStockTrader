@@ -1,6 +1,6 @@
 ﻿namespace StockTrader.AI.Prompts;
 
-public class TradingDecisionPrompt(string normalizedSymbol, string integratedAnalysis)
+public class TradingDecisionPrompt(string normalizedSymbol, string integratedAnalysis, string memoryContext)
 {
     public string SystemPrompt =
 """
@@ -62,8 +62,12 @@ Return ONLY valid JSON matching this structure:
 
                 Symbol: {normalizedSymbol}
 
+                Previous Trading History: {memoryContext}
+
                 Integrated Analysis:
                 ---------------------
                 {integratedAnalysis}
+
+                Please ensure that the trading decision is taken considering previous trading history as well.
                 """;
 }

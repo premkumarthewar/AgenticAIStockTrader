@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\StockTrader.Application\StockTrader.Application.csproj" />
     <ProjectReference Include="..\StockTrader.Contracts\StockTrader.Contracts.csproj" />
+    <ProjectReference Include="..\StockTrader.Persistence\StockTrader.Persistence.csproj" />
     <ProjectReference Include="..\StockTrader.Shared\StockTrader.Shared.csproj" />
   </ItemGroup>
 

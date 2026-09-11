@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using StockTrader.Persistence.Context;
+using StockTrader.Application.Common.Interfaces;
+using StockTrader.Persistence.Services;
 
 namespace StockTrader.Persistence;
 
@@ -14,6 +16,9 @@ public static class DependencyInjection
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"));
         });
+
+        services.AddScoped<IMemoryService, MemoryService>();
+
         return services;
     }
 }

@@ -66,4 +66,15 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
 
         return Ok(result);
     }
+
+    [HttpGet("memory/{symbol}")]
+    public async Task<IActionResult> GetMemory(string symbol, CancellationToken cancellationToken)
+    {
+        Result<MemoryResponseDto> result = await tradingAdvisorService.GetMemoryAsync(symbol, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
 }

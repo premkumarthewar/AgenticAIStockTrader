@@ -9,6 +9,7 @@ using StockTrader.AI.Agents.Base;
 using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Kernel;
+using StockTrader.AI.Memory;
 using StockTrader.AI.Options;
 using StockTrader.AI.Plugins.CompanyProfile;
 using StockTrader.AI.Plugins.Financials;
@@ -63,7 +64,10 @@ public static class DependencyInjection
         services.AddScoped<FinancialsPlugin>();
         services.AddScoped<NewsPlugin>();
 
-        //5. Agents
+        //5. Memory & Conversation History
+        services.AddSingleton<ConversationMemory>();
+
+        //6. Agents
         services.AddScoped<IMarketAgent, MarketAgent>();
         services.AddScoped<IResearchAgent, ResearchAgent>();
         services.AddScoped<ITradingDecisionAgent, TradingDecisionAgent>();
@@ -72,13 +76,15 @@ public static class DependencyInjection
         services.AddScoped<IExecutionAgent, ExecutionAgent>();
         services.AddScoped<IWatchlistAgent, WatchlistAgent>();
 
-        //6. Agent Factory
+        //7. Agent Factory
         services.AddScoped<IAgentFactory, AgentFactory>();
 
-        //7. Orchestrator
+        //8. Orchestrator
         services.AddScoped<ITradingOrchestrator, TradingOrchestrator>();
 
-        //8. Application Services
+        services.AddScoped<IMemorySummarizer, MemorySummarizer>();
+
+        //9. Application Services
         services.AddScoped<ITradingAdvisorService, TradingAdvisorService>();
 
         return services;

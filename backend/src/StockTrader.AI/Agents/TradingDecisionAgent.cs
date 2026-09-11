@@ -5,12 +5,13 @@ using StockTrader.AI.Agents.Base;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Prompts;
 using StockTrader.Application.AI.Dtos;
+using StockTrader.Application.Common.Interfaces;
 using StockTrader.Shared.Results;
 using System.Text.Json;
 
 namespace StockTrader.AI.Agents;
 
-public sealed class TradingDecisionAgent(AgentContext context) : AgentBase(context), ITradingDecisionAgent
+public sealed class TradingDecisionAgent(AgentContext context, IMemoryService memoryService) : AgentBase(context), ITradingDecisionAgent
 {
     public async Task<Result<TradingDecisionDto>> DecideAsync(string symbol, string integratedAnalysis, CancellationToken cancellationToken = default)
     {
@@ -19,7 +20,9 @@ public sealed class TradingDecisionAgent(AgentContext context) : AgentBase(conte
 
         string normalizedSymbol = symbol.Trim().ToUpperInvariant();
 
-        TradingDecisionPrompt tradingDecisionPrompt = new(normalizedSymbol, integratedAnalysis);
+        string memoryContext = await memoryService.GetMemoryContextAsync(normalizedSymbol, 10, cancellationToken);
+
+        TradingDecisionPrompt tradingDecisionPrompt = new(normalizedSymbol, integratedAnalysis, memoryContext);
 
         try
         {
