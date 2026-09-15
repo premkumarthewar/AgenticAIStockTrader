@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StockTrader.AI.Services;
 using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.Backtesting.Dtos;
 using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
+using StockTrader.Application.PaperTrading.Dtos;
+using StockTrader.Application.PaperTrading.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
 using StockTrader.Shared.Results;
@@ -12,7 +13,7 @@ namespace StockTrader.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktestingService backtestingService) : ControllerBase
+public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktestingService backtestingService, IPaperTradingService paperTradingService) : ControllerBase
 {
     [HttpGet("decision")]
     [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status200OK)]
@@ -91,5 +92,69 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
             return BadRequest(result);
 
         return Ok(result);
+    }
+
+
+    [HttpPost("paper-trading/trade")]
+    public async Task<IActionResult> ExecutePaperTrade(
+    [FromBody] PaperTradeRequestDto request,
+    CancellationToken cancellationToken)
+    {
+        Result<PaperPortfolioDto> result =
+            await paperTradingService.ExecuteTradeAsync(
+                request,
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("paper-trading/portfolio")]
+    public async Task<IActionResult> GetPaperPortfolio(
+    CancellationToken cancellationToken)
+    {
+        Result<PaperPortfolioDto> result =
+            await paperTradingService.GetPortfolioAsync(
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("paper-trading/position/{symbol}")]
+    public async Task<IActionResult> GetPaperPosition(
+    string symbol,
+    CancellationToken cancellationToken)
+    {
+        Result<PaperPositionDto> result =
+            await paperTradingService.GetPositionAsync(
+                symbol,
+                cancellationToken);
+
+        if (result.IsFailure)
+            return NotFound(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPost("paper-trading/initialize")]
+    public async Task<IActionResult> InitializePaperTrading(
+    [FromQuery] decimal initialCapital,
+    CancellationToken cancellationToken)
+    {
+        Result<PaperPortfolioDto> result = await paperTradingService.InitializePortfolioAsync(initialCapital, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+
+        return Ok(result.Value);
     }
 }

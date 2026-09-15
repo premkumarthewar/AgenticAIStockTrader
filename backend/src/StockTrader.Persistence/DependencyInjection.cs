@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using StockTrader.Persistence.Context;
 using StockTrader.Application.Common.Interfaces;
+using StockTrader.Application.PaperTrading.Interfaces;
+using StockTrader.Persistence.Context;
 using StockTrader.Persistence.Services;
 
 namespace StockTrader.Persistence;
@@ -18,6 +19,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IMemoryService, MemoryService>();
+
+        services.AddScoped<IPaperTradingPersistence, PaperTradingPersistenceService>();
 
         return services;
     }

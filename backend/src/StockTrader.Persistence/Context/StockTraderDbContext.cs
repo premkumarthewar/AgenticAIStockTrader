@@ -10,6 +10,12 @@ namespace StockTrader.Persistence.Context
 
         public DbSet<MemorySummary> MemorySummaries => Set<MemorySummary>();
 
+        public DbSet<PaperPortfolio> PaperPortfolios => Set<PaperPortfolio>();
+
+        public DbSet<PaperPosition> PaperPositions => Set<PaperPosition>();
+
+        public DbSet<PaperTrade> PaperTrades => Set<PaperTrade>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
