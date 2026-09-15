@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StockTrader.AI.Services;
 using StockTrader.Application.AI.Dtos;
+using StockTrader.Application.Backtesting.Dtos;
+using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
@@ -9,7 +12,7 @@ namespace StockTrader.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AIController(ITradingAdvisorService tradingAdvisorService) : ControllerBase
+public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktestingService backtestingService) : ControllerBase
 {
     [HttpGet("decision")]
     [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status200OK)]
@@ -71,6 +74,18 @@ public class AIController(ITradingAdvisorService tradingAdvisorService) : Contro
     public async Task<IActionResult> GetMemory(string symbol, CancellationToken cancellationToken)
     {
         Result<MemoryResponseDto> result = await tradingAdvisorService.GetMemoryAsync(symbol, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+
+    [HttpPost("backtest")]
+    public async Task<IActionResult> Backtest([FromBody] BacktestRequestDto request, CancellationToken cancellationToken)
+    {
+        Result<BacktestResultDto> result = await backtestingService.RunAsync(request, cancellationToken);
 
         if (result.IsFailure)
             return BadRequest(result);

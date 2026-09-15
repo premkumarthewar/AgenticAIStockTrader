@@ -8,6 +8,8 @@ using StockTrader.AI.Agents;
 using StockTrader.AI.Agents.Base;
 using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
+using StockTrader.AI.Backtesting;
+using StockTrader.AI.Backtesting.Interfaces;
 using StockTrader.AI.Kernel;
 using StockTrader.AI.Memory;
 using StockTrader.AI.Options;
@@ -17,6 +19,7 @@ using StockTrader.AI.Plugins.HistoricalPrice;
 using StockTrader.AI.Plugins.News;
 using StockTrader.AI.Plugins.Quotes;
 using StockTrader.AI.Services;
+using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
 
 namespace StockTrader.AI;
@@ -86,6 +89,10 @@ public static class DependencyInjection
 
         //9. Application Services
         services.AddScoped<ITradingAdvisorService, TradingAdvisorService>();
+
+        services.AddScoped<IBacktestingEngine, BacktestingEngine>();
+
+        services.AddScoped<IBacktestingService, BacktestingService>();
 
         return services;
     }
