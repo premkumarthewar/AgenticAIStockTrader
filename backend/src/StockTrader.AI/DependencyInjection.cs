@@ -20,10 +20,13 @@ using StockTrader.AI.Plugins.Financials;
 using StockTrader.AI.Plugins.HistoricalPrice;
 using StockTrader.AI.Plugins.News;
 using StockTrader.AI.Plugins.Quotes;
+using StockTrader.AI.RiskManagement;
+using StockTrader.AI.RiskManagement.Interfaces;
 using StockTrader.AI.Services;
 using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Application.PaperTrading.Interfaces;
+using StockTrader.Application.RiskManagement.Interfaces;
 
 namespace StockTrader.AI;
 
@@ -100,6 +103,10 @@ public static class DependencyInjection
         services.AddScoped<IPaperTradingEngine, PaperTradingEngine>();
 
         services.AddScoped<IPaperTradingService, PaperTradingService>();
+
+        services.AddScoped<IRiskEngine, RiskEngine>();
+
+        services.AddScoped<IRiskManagementService, RiskManagementService>();
 
         return services;
     }

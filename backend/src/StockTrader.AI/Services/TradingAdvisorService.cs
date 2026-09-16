@@ -1,8 +1,11 @@
 ﻿using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
-using StockTrader.AI.Memory;
 using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.Common.Interfaces;
+using StockTrader.Application.PaperTrading.Dtos;
+using StockTrader.Application.PaperTrading.Interfaces;
+using StockTrader.Application.RiskManagement.Dtos;
+using StockTrader.Application.RiskManagement.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
 using StockTrader.Domain.Entities;
@@ -11,7 +14,7 @@ using System.Text.Json;
 
 namespace StockTrader.AI.Services;
 
-public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator, IMemoryService memoryService, IMemorySummarizer memorySummarizer) : ITradingAdvisorService
+public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator, IMemoryService memoryService, IMemorySummarizer memorySummarizer, IRiskManagementService riskManagementService, IPaperTradingService paperTradingService) : ITradingAdvisorService
 {
     public async Task<Result<TradingDecisionDto>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
@@ -20,14 +23,56 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
 
         Result<TradingDecisionDto> tradingDecision = await tradingOrchestrator.AnalyzeAsync(request, cancellationToken);
 
-        await memoryService.SaveAsync("TradingDecision", request.Symbol, JsonSerializer.Serialize(tradingDecision.Value), "TradingDecisionAgent", cancellationToken);
+        if (tradingDecision.IsFailure)
+            return tradingDecision;
+
+        TradingDecisionDto decision = tradingDecision.Value;
+
+        PaperPortfolioDto? portfolio = null;
+
+        Result<PaperPortfolioDto> portfolioResult = await paperTradingService.GetPortfolioAsync(cancellationToken);
+
+        if (portfolioResult.IsSuccess)
+            portfolio = portfolioResult.Value;
+
+        decimal currentPrice = decision.TargetBuyPrice ?? decision.TargetSellPrice ?? 0m;
+
+        decimal existingExposure = 0m;
+
+        if (portfolio is not null)
+            existingExposure = portfolio.Positions.Where(x => x.Symbol.Equals(request.Symbol, StringComparison.OrdinalIgnoreCase)).Sum(x => x.MarketValue);
+
+        RiskRequestDto riskRequest = new()
+        {
+            Symbol = request.Symbol,
+            CurrentPrice = currentPrice,
+            CashBalance = portfolio?.CashBalance ?? 100000m,
+            PortfolioValue = portfolio?.CurrentPortfolioValue ?? 100000m,
+            ExistingExposure = existingExposure
+        };
+
+        Result<RiskAssessmentDto> riskResult = await riskManagementService.AssessAsync(riskRequest, cancellationToken);
+
+        if (riskResult.IsSuccess && !riskResult.Value.IsApproved && decision.Decision.Equals("BUY", StringComparison.OrdinalIgnoreCase))
+        {
+            decision = decision with
+            {
+                Decision = "HOLD",
+                RiskLevel = "HIGH",
+                Reasoning =
+                    $"{decision.Reasoning} " +
+                    $"Risk Override: {riskResult.Value.Reason}"
+            };
+        }
+
+        await memoryService.SaveAsync("TradingDecision", request.Symbol, JsonSerializer.Serialize(tradingDecision), "TradingDecisionAgent", cancellationToken);
 
         int memoryCount = (await memoryService.GetBySymbolAsync(request.Symbol, cancellationToken)).Count;
 
         if (memoryCount % 25 == 0)
             await memorySummarizer.RefreshSummaryAsync(request.Symbol, cancellationToken);
 
-        return tradingDecision;
+        return Result<TradingDecisionDto>.Success(decision);
     }
 
     public async Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)

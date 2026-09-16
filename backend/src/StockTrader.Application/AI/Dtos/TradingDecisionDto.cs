@@ -16,6 +16,8 @@ public sealed record TradingDecisionDto
 
     public required string Reasoning { get; init; }
 
+    public decimal RecommendedQuantity { get; init; }
+
     public IReadOnlyList<string> SupportingFactors { get; init; }
         = [];
 
