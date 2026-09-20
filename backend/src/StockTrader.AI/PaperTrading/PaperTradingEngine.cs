@@ -48,12 +48,10 @@ public sealed class PaperTradingEngine(
         if (action == "BUY")
         {
             if (portfolio.CashBalance < tradeValue)
-            {
                 return Result<PaperPortfolioDto>.Failure(new Error("InternalServerError",
                     $"Insufficient cash balance. " +
                     $"Required: {tradeValue:F2}, " +
                     $"Available: {portfolio.CashBalance:F2}."));
-            }
 
             PaperPosition? position =
                 portfolio.Positions.FirstOrDefault(
@@ -81,7 +79,7 @@ public sealed class PaperTradingEngine(
                 decimal newCost =
                     request.Quantity * request.Price;
 
-                decimal newQuantity =
+                int newQuantity =
                     position.Quantity + request.Quantity;
 
                 position.AveragePrice =
@@ -116,13 +114,9 @@ public sealed class PaperTradingEngine(
             portfolio.CashBalance += tradeValue;
 
             if (position.Quantity == 0)
-            {
                 portfolio.Positions.Remove(position);
-            }
             else
-            {
                 position.LastUpdatedOnUtc = DateTime.UtcNow;
-            }
         }
 
         portfolio.LastUpdatedOnUtc = DateTime.UtcNow;

@@ -6,7 +6,7 @@ public sealed record PaperTradeRequestDto
 
     public required string Action { get; init; }
 
-    public decimal Quantity { get; init; }
+    public int Quantity { get; init; }
 
     public decimal Price { get; init; }
 }

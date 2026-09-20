@@ -4,7 +4,7 @@ public sealed record PaperPositionDto
 {
     public required string Symbol { get; init; }
 
-    public decimal Quantity { get; init; }
+    public int Quantity { get; init; }
 
     public decimal AveragePrice { get; init; }
 
