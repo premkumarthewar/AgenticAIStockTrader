@@ -23,9 +23,9 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
         Result<TradingDecisionDto> result = await tradingAdvisorService.AnalyzeAsync(request, cancellationToken);
 
         if (result.IsFailure)
-            return BadRequest(result);
+            return BadRequest(result.Error);
 
-        return Ok(result);
+        return Ok(result.Value);
     }
 
     [HttpGet("market-analysis")]
@@ -33,18 +33,21 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     {
         Result<AnalyzeStockResponse> response = await tradingAdvisorService.AnalyzeMarketAsync(analyzeStockRequest, cancellationToken);
 
-        return Ok(response);
+        if (response.IsFailure)
+            return BadRequest(response.Error);
+
+        return Ok(response.Value);
     }
 
     [HttpGet("research")]
-    public async Task<ActionResult<AnalyzeStockResponse>> Research(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AnalyzeStockResponse>> Research([FromQuery] AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {
         Result<AnalyzeStockResponse> response = await tradingAdvisorService.ResearchAsync(analyzeStockRequest, cancellationToken);
 
         if (response.IsFailure)
-            return BadRequest(response);
+            return BadRequest(response.Error);
 
-        return Ok(response);
+        return Ok(response.Value);
     }
 
     [HttpPost("portfolio-analysis")]
@@ -55,20 +58,20 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
         Result<PortfolioRecommendationDto> result = await tradingAdvisorService.AnalyzePortfolioAsync(request, cancellationToken);
 
         if (result.IsFailure)
-            return BadRequest(result);
+            return BadRequest(result.Error);
 
-        return Ok(result);
+        return Ok(result.Value);
     }
 
     [HttpPost("watchlist-analysis")]
     public async Task<IActionResult> WatchlistAnalysis([FromBody] WatchlistDto request, CancellationToken cancellationToken)
     {
-        Task<Result<WatchlistAnalysisDto>> result = tradingAdvisorService.AnalyzeWatchlistAsync(request, cancellationToken);
+        Result<WatchlistAnalysisDto> result = await tradingAdvisorService.AnalyzeWatchlistAsync(request, cancellationToken);
 
-        if (result.IsFaulted)
-            return BadRequest(result);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
 
-        return Ok(result);
+        return Ok(result.Value);
     }
 
     [HttpGet("memory/{symbol}")]
@@ -77,9 +80,9 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
         Result<MemoryResponseDto> result = await tradingAdvisorService.GetMemoryAsync(symbol, cancellationToken);
 
         if (result.IsFailure)
-            return BadRequest(result);
+            return BadRequest(result.Error);
 
-        return Ok(result);
+        return Ok(result.Value);
     }
 
 
@@ -89,9 +92,9 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
         Result<BacktestResultDto> result = await backtestingService.RunAsync(request, cancellationToken);
 
         if (result.IsFailure)
-            return BadRequest(result);
+            return BadRequest(result.Error);
 
-        return Ok(result);
+        return Ok(result.Value);
     }
 
 

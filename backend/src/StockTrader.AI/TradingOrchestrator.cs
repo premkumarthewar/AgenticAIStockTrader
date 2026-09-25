@@ -1,11 +1,8 @@
-﻿using Azure.Core;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using StockTrader.AI.Agents.Interfaces;
-using StockTrader.AI.Portfolio;
 using StockTrader.AI.Prompts;
-using StockTrader.AI.Services;
 using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.PaperTrading.Dtos;
 using StockTrader.Application.PaperTrading.Interfaces;
@@ -26,55 +23,22 @@ public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(analyzeStockRequest.Symbol))
-        {
-            return Result<TradingDecisionDto>.Failure(
-                new Error(
-                    "BadRequest",
-                    "Stock symbol is required."));
-        }
+            return Result<TradingDecisionDto>.Failure(new Error("BadRequest", "Stock symbol is required."));
 
-        string normalizedSymbol =
-            analyzeStockRequest.Symbol
-                .Trim()
-                .ToUpperInvariant();
+        string normalizedSymbol = analyzeStockRequest.Symbol.Trim().ToUpperInvariant();
 
         try
         {
-            Task<Result<string>> marketTask =
-                marketAgent.AnalyzeAsync(
-                    analyzeStockRequest,
-                    cancellationToken);
-
-            Task<Result<string>> researchTask =
-                researchAgent.ResearchAsync(
-                    analyzeStockRequest,
-                    cancellationToken);
-
-            await Task.WhenAll(
-                marketTask,
-                researchTask);
-
-            Result<string> marketResult =
-                await marketTask;
+            // MarketAgent and ResearchAgent both read trading memory through the same request-scoped IMemoryService/DbContext instance. Running them concurrently via Task.WhenAll makes two operations start on that DbContext at once, which EF Core does not allow ("A second operation was started on this context instance before a previous operation completed"). They're run sequentially here to avoid that; each call is independently awaited before the next starts.
+            Result<string> marketResult = await marketAgent.AnalyzeAsync(analyzeStockRequest, cancellationToken);
 
             if (marketResult.IsFailure)
-            {
-                return Result<TradingDecisionDto>.Failure(
-                    new Error(
-                        "InternalServerError",
-                        $"Market analysis failed: {marketResult.Error}"));
-            }
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Market analysis failed: {marketResult.Error}"));
 
-            Result<string> researchResult =
-                await researchTask;
+            Result<string> researchResult = await researchAgent.ResearchAsync(analyzeStockRequest, cancellationToken);
 
             if (researchResult.IsFailure)
-            {
-                return Result<TradingDecisionDto>.Failure(
-                    new Error(
-                        "InternalServerError",
-                        $"Company research failed: {researchResult.Error}"));
-            }
+                return Result<TradingDecisionDto>.Failure(new Error("InternalServerError", $"Company research failed: {researchResult.Error}"));
 
             string? portfolioContext = null;
             string? watchlistContext = null;
@@ -243,6 +207,7 @@ public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent
                     $"Unable to complete trading analysis for {normalizedSymbol}: {ex.Message}"));
         }
     }
+
     private static string BuildCombinedAnalysis(string symbol, string marketAnalysis, string researchAnalysis)
     {
         return $"""
@@ -294,7 +259,6 @@ public sealed class TradingOrchestrator(IMarketAgent marketAgent, IResearchAgent
             return Result<string>.Failure(new Error("InternalServerError", $"Unable to synthesize the agent analysis: {ex.Message}"));
         }
     }
-
 
     private static string BuildEnrichedResearchAnalysis(
         string researchAnalysis,

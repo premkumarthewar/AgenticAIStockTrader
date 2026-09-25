@@ -10,6 +10,7 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "10.0.10",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.10",
+          "StockTrader.Application": "1.0.0",
           "StockTrader.Domain": "1.0.0",
           "StockTrader.Shared": "1.0.0",
           "Swashbuckle.AspNetCore": "10.2.3"
@@ -384,6 +385,32 @@
           }
         }
       },
+      "StockTrader.Application/1.0.0": {
+        "dependencies": {
+          "StockTrader.Contracts": "1.0.0",
+          "StockTrader.Domain": "1.0.0",
+          "StockTrader.Shared": "1.0.0",
+          "Swashbuckle.AspNetCore": "10.2.3"
+        },
+        "runtime": {
+          "StockTrader.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "StockTrader.Contracts/1.0.0": {
+        "dependencies": {
+          "StockTrader.Shared": "1.0.0",
+          "Swashbuckle.AspNetCore": "10.2.3"
+        },
+        "runtime": {
+          "StockTrader.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "StockTrader.Domain/1.0.0": {
         "dependencies": {
           "StockTrader.Shared": "1.0.0",
@@ -617,6 +644,16 @@
       "sha512": "sha512-o94k2RKuAce3GeDMlUvIXlhVa1kWpJw95E6C9LwW0KlG0nj5+SgCiIxJ2Eroqb9sLtG1mEMbFttZIBZ13EJPvQ==",
       "path": "system.security.cryptography.protecteddata/9.0.4",
       "hashPath": "system.security.cryptography.protecteddata.9.0.4.nupkg.sha512"
+    },
+    "StockTrader.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "StockTrader.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "StockTrader.Domain/1.0.0": {
       "type": "project",

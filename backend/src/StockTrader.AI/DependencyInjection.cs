@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using StockTrader.AI.Agents;
 using StockTrader.AI.Agents.Base;
@@ -48,6 +49,9 @@ public static class DependencyInjection
 
             return Microsoft.SemanticKernel.Kernel.CreateBuilder().AddOpenAIChatCompletion(modelId: options.Model, apiKey: options.ApiKey).Build();
         });
+
+        // IChatCompletionService is only registered inside the Kernel's internal service provider, not in the app's DI container. MemorySummarizer (and anything else that asks for IChatCompletionService directly) needs it exposed here too, otherwise ASP.NET Core's service-validation at startup throws.
+        services.AddSingleton(serviceProvider => serviceProvider.GetRequiredService<Microsoft.SemanticKernel.Kernel>().GetRequiredService<IChatCompletionService>());
 
         //3. Agent Context
         services.AddScoped<AgentContext>(serviceProvider =>

@@ -8,7 +8,12 @@ namespace StockTrader.Persistence.Services;
 
 public sealed class MemoryService(StockTraderDbContext dbContext) : IMemoryService
 {
-    public async Task<IReadOnlyCollection<TradingMemory>> GetBySymbolAsync(string symbol, CancellationToken cancellationToken = default) => await dbContext.TradingMemories.Where(x => x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)).OrderByDescending(x => x.CreatedOnUtc).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyCollection<TradingMemory>> GetBySymbolAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        string normalizedSymbol = symbol.Trim().ToUpperInvariant();
+
+        return await dbContext.TradingMemories.Where(x => x.Symbol == normalizedSymbol).OrderByDescending(x => x.CreatedOnUtc).ToListAsync(cancellationToken);
+    }
 
     public async Task<string> GetMemoryContextAsync(string symbol, int maxRecords = 10, CancellationToken cancellationToken = default)
     {
@@ -53,7 +58,7 @@ public sealed class MemoryService(StockTraderDbContext dbContext) : IMemoryServi
         {
             Id = Guid.NewGuid(),
             Category = category,
-            Symbol = symbol,
+            Symbol = symbol.Trim().ToUpperInvariant(),
             Content = content,
             SourceAgent = sourceAgent,
             CreatedOnUtc = DateTime.UtcNow,

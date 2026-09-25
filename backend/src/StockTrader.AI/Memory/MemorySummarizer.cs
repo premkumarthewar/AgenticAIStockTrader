@@ -14,7 +14,7 @@ namespace StockTrader.AI.Memory
         {
             string normalizedSymbol = symbol.Trim().ToUpperInvariant();
 
-            List<TradingMemory> memories = await dbContext.TradingMemories.Where(t => t.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)).OrderByDescending(t => t.CreatedOnUtc).Take(50).ToListAsync(cancellationToken);
+            List<TradingMemory> memories = await dbContext.TradingMemories.Where(t => t.Symbol == normalizedSymbol).OrderByDescending(t => t.CreatedOnUtc).Take(50).ToListAsync(cancellationToken);
 
             if (memories.Count == 0)
                 return;
@@ -55,7 +55,7 @@ namespace StockTrader.AI.Memory
 
                 string summary = response.Content?.Trim() ?? "No summary available";
 
-                MemorySummary? existingSummary = await dbContext.MemorySummaries.FirstOrDefaultAsync(m => m.Symbol.Equals(normalizedSymbol, StringComparison.OrdinalIgnoreCase), cancellationToken);
+                MemorySummary? existingSummary = await dbContext.MemorySummaries.FirstOrDefaultAsync(m => m.Symbol == normalizedSymbol, cancellationToken);
 
                 if (existingSummary is null)
                     dbContext.MemorySummaries.Add(new MemorySummary
