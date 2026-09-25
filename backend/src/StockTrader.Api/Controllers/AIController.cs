@@ -28,6 +28,19 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
         return Ok(result.Value);
     }
 
+    [HttpPost("decision/execute")]
+    [ProducesResponseType(typeof(Result<ExecutionResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<ExecutionResultDto>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExecuteDecision([FromQuery] AnalyzeStockRequest request, CancellationToken cancellationToken)
+    {
+        Result<ExecutionResultDto> result = await tradingAdvisorService.AnalyzeAndExecuteAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+
+        return Ok(result.Value);
+    }
+
     [HttpGet("market-analysis")]
     public async Task<ActionResult<AnalyzeStockResponse>> Market([FromQuery] AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken)
     {

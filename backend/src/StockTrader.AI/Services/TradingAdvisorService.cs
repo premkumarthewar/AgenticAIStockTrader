@@ -75,6 +75,18 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
         return Result<TradingDecisionDto>.Success(decision);
     }
 
+    public async Task<Result<ExecutionResultDto>> AnalyzeAndExecuteAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    {
+        Result<TradingDecisionDto> decisionResult = await AnalyzeAsync(request, cancellationToken);
+
+        if (decisionResult.IsFailure)
+            return Result<ExecutionResultDto>.Failure(decisionResult.Error);
+
+        IExecutionAgent executionAgent = agentFactory.CreateExecutionAgent();
+
+        return await executionAgent.ExecuteAsync(decisionResult.Value, cancellationToken);
+    }
+
     public async Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
         IMarketAgent marketAgent = agentFactory.CreateMarketAgent();

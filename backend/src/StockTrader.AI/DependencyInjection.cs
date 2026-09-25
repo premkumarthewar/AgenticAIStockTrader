@@ -90,7 +90,6 @@ public static class DependencyInjection
         services.AddScoped<IResearchAgent, ResearchAgent>();
         services.AddScoped<ITradingDecisionAgent, TradingDecisionAgent>();
         services.AddScoped<IPortfolioAgent, PortfolioAgent>();
-        services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IExecutionAgent, ExecutionAgent>();
         services.AddScoped<IWatchlistAgent, WatchlistAgent>();
 

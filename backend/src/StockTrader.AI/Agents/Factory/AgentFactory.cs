@@ -10,7 +10,6 @@ public sealed class AgentFactory(
     IResearchAgent researchAgent,
     ITradingDecisionAgent tradingDecisionAgent,
     IPortfolioAgent portfolioAgent,
-    IRiskAgent riskAgent,
     IExecutionAgent executionAgent,
     ITradingOrchestrator tradingOrchestrator,
     IWatchlistAgent watchlistAgent) : IAgentFactory
@@ -19,7 +18,6 @@ public sealed class AgentFactory(
     public IResearchAgent CreateResearchAgent() => researchAgent;
     public ITradingDecisionAgent CreateTradingDecisionAgent() => tradingDecisionAgent;
     public IPortfolioAgent CreatePortfolioAgent() => portfolioAgent;
-    public IRiskAgent CreateRiskAgent() => riskAgent;
     public IExecutionAgent CreateExecutionAgent() => executionAgent;
     public ITradingOrchestrator CreateTradingOrchestrator() => tradingOrchestrator;
     public IWatchlistAgent CreateWatchlistAgent() => watchlistAgent;

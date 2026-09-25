@@ -15,8 +15,6 @@ public interface IAgentFactory
 
     IPortfolioAgent CreatePortfolioAgent();
 
-    IRiskAgent CreateRiskAgent();
-
     IExecutionAgent CreateExecutionAgent();
 
     ITradingOrchestrator CreateTradingOrchestrator();
