@@ -1,7 +1,10 @@
 using StockTrader.AI;
+using StockTrader.Api.Middleware;
 using StockTrader.Application;
 using StockTrader.Infrastructure;
 using StockTrader.Persistence;
+
+const string CorsPolicyName = "StockTraderCorsPolicy";
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,28 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Global exception handling: any unhandled exception is converted into a consistent ProblemDetails JSON by GlobalExceptionHandler instead of crashing the request or leaking a raw stack trace to the client.
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddProblemDetails();
+
+// CORS: allowed origins come from configuration Cors:AllowedOrigins in appsettings.json / appsettings.{Environment}.json) so the frontend's origin can be set per-environment without a code change. No origins configured means no cross-origin requests are allowed.
+string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+    });
+});
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddArtificialIntelligence(builder.Configuration);
@@ -20,6 +45,9 @@ builder.Services.AddArtificialIntelligence(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 
 WebApplication app = builder.Build();
+
+// Registered first so it can catch exceptions thrown by any middleware below it.
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -34,6 +62,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(CorsPolicyName);
 
 app.UseAuthorization();
 

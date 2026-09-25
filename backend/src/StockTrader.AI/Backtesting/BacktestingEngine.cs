@@ -1,25 +1,39 @@
-﻿using StockTrader.AI.Backtesting.Interfaces;
-using StockTrader.Application.AI.Dtos;
+using StockTrader.AI.Backtesting.Interfaces;
 using StockTrader.Application.Backtesting.Dtos;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Application.MarketData.Dtos;
-using StockTrader.Contracts.Requests;
 using StockTrader.Shared.Results;
 
 namespace StockTrader.AI.Backtesting;
 
 public sealed class BacktestingEngine(
     IStockMarketService stockMarketService,
-    ITradingAdvisorService tradingAdvisorService) : IBacktestingEngine
+    IBacktestStrategy strategy) : IBacktestingEngine
 {
     public async Task<Result<BacktestResultDto>> ExecuteAsync(BacktestRequestDto request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Symbol))
+            return Result<BacktestResultDto>.Failure(
+                new Error("BadRequest", "Stock symbol is required."));
+
+        if (request.InitialCapital <= 0)
+            return Result<BacktestResultDto>.Failure(
+                new Error("BadRequest", "Initial capital must be greater than zero."));
+
+        if (request.CommissionPerTrade < 0)
+            return Result<BacktestResultDto>.Failure(
+                new Error("BadRequest", "Commission per trade cannot be negative."));
+
+        if (request.StartDate > request.EndDate)
+            return Result<BacktestResultDto>.Failure(
+                new Error("BadRequest", "Start date cannot be later than end date."));
+
         string symbol = request.Symbol.Trim().ToUpperInvariant();
 
         Result<IReadOnlyList<HistoricalPriceDto>> historicalResult = await stockMarketService
                 .GetHistoricalPricesAsync(symbol,
-                    Convert.ToDateTime(request.StartDate),
-                    Convert.ToDateTime(request.EndDate),
+                    request.StartDate.ToDateTime(TimeOnly.MinValue),
+                    request.EndDate.ToDateTime(TimeOnly.MinValue),
                     cancellationToken);
 
         if (historicalResult.IsFailure)
@@ -39,30 +53,48 @@ public sealed class BacktestingEngine(
 
         List<SimulatedTradeDto> trades = [];
 
-        foreach (HistoricalPriceDto price in prices)
+        List<EquityPointDto> equityCurve = new(prices.Count);
+
+        // Walks the historical prices once, in order, asking the (deterministic,
+        // point-in-time-correct) strategy for a decision at each day using only data
+        // available up to and including that day - no look-ahead, and no per-day call
+        // into the live AI agent pipeline.
+        for (int i = 0; i < prices.Count; i++)
         {
-            Result<TradingDecisionDto> decisionResult =
-                await tradingAdvisorService.AnalyzeAsync(new AnalyzeStockRequest { Symbol = symbol }, cancellationToken);
+            HistoricalPriceDto price = prices[i];
 
-            if (decisionResult.IsFailure)
-                continue;
+            BacktestSignal signal = strategy.Decide(prices, i);
 
-            TradingDecisionDto decision = decisionResult.Value;
+            ExecuteTrade(
+                signal,
+                price,
+                symbol,
+                request.CommissionPerTrade,
+                trades,
+                ref cash,
+                ref sharesOwned);
 
-            await ExecuteTradeAsync(decision, price, symbol,
-                trades, ref cash, ref sharesOwned);
+            equityCurve.Add(new EquityPointDto
+            {
+                Date = price.Date,
+                PortfolioValue = cash + (sharesOwned * price.Close)
+            });
         }
 
         decimal finalPortfolioValue = cash + (sharesOwned * prices[prices.Count - 1].Close);
 
         decimal totalReturn = BacktestMetricsCalculator.CalculateReturn(
-        request.InitialCapital, finalPortfolioValue);
+            request.InitialCapital, finalPortfolioValue);
 
-        decimal cagr = BacktestMetricsCalculator.CalculateCagr(request.InitialCapital, finalPortfolioValue, request.StartDate, request.EndDate);
+        decimal cagr = BacktestMetricsCalculator.CalculateCagr(
+            request.InitialCapital, finalPortfolioValue, request.StartDate, request.EndDate);
 
-        decimal maxDrawdown = BacktestMetricsCalculator.CalculateMaxDrawdown(trades);
+        decimal maxDrawdown = BacktestMetricsCalculator.CalculateMaxDrawdown(equityCurve);
 
-        var (WinningTrades, LosingTrades, WinRate, ProfitFactor) = CalculateTradeStatistics(trades);
+        decimal sharpeRatio = BacktestMetricsCalculator.CalculateSharpeRatio(equityCurve);
+
+        var (WinningTrades, LosingTrades, WinRate, ProfitFactor) =
+            BacktestMetricsCalculator.CalculateTradeStatistics(trades);
 
         BacktestResultDto result =
      new()
@@ -73,112 +105,76 @@ public sealed class BacktestingEngine(
          TotalReturnPercentage = totalReturn,
          CAGR = cagr,
          MaxDrawdown = maxDrawdown,
+         SharpeRatio = sharpeRatio,
          WinRate = WinRate,
          ProfitFactor = ProfitFactor,
          WinningTrades = WinningTrades,
          LosingTrades = LosingTrades,
          TotalTrades = trades.Count,
-         Trades = trades
+         Trades = trades,
+         EquityCurve = equityCurve
      };
 
         return Result<BacktestResultDto>.Success(
             result);
     }
 
-    private static Task ExecuteTradeAsync(TradingDecisionDto decision, HistoricalPriceDto price, string symbol, List<SimulatedTradeDto> trades, ref decimal cash, ref int sharesOwned)
+    private static void ExecuteTrade(
+        BacktestSignal signal,
+        HistoricalPriceDto price,
+        string symbol,
+        decimal commissionPerTrade,
+        List<SimulatedTradeDto> trades,
+        ref decimal cash,
+        ref int sharesOwned)
     {
-        string action = decision.Decision.Trim().ToUpperInvariant();
-
         decimal tradePrice = price.Close;
 
-        if (action == "BUY")
+        if (signal == BacktestSignal.Buy)
         {
-            int quantity = (int)(cash / tradePrice);
+            int quantity = (int)((cash - commissionPerTrade) / tradePrice);
 
-            if (quantity > 0)
+            if (quantity <= 0)
+                return;
+
+            decimal cost = (quantity * tradePrice) + commissionPerTrade;
+
+            cash -= cost;
+
+            sharesOwned += quantity;
+
+            trades.Add(new SimulatedTradeDto
             {
-                cash -= quantity * tradePrice;
+                Symbol = symbol,
+                Action = "BUY",
+                ExecutedAt = price.Date,
+                Price = tradePrice,
+                Quantity = quantity,
+                CashBalance = cash,
+                PortfolioValue = cash + (sharesOwned * tradePrice)
+            });
 
-                sharesOwned += quantity;
-
-                trades.Add(new SimulatedTradeDto
-                {
-                    Symbol = symbol,
-                    Action = "BUY",
-                    ExecutedAt = price.Date,
-                    Price = tradePrice,
-                    Quantity = quantity,
-                    CashBalance = cash,
-                    PortfolioValue = cash + (sharesOwned * tradePrice)
-                });
-            }
+            return;
         }
 
-        if (action == "SELL")
+        if (signal == BacktestSignal.Sell && sharesOwned > 0)
         {
-            if (sharesOwned > 0)
+            decimal proceeds = (sharesOwned * tradePrice) - commissionPerTrade;
+
+            cash += proceeds;
+
+            trades.Add(new SimulatedTradeDto
             {
-                cash += sharesOwned * tradePrice;
+                Symbol = symbol,
+                Action = "SELL",
+                ExecutedAt = price.Date,
+                Price = tradePrice,
+                Quantity = sharesOwned,
+                CashBalance = cash,
+                PortfolioValue = cash
+            });
 
-                trades.Add(new SimulatedTradeDto
-                {
-                    Symbol = symbol,
-                    Action = "SELL",
-                    ExecutedAt = price.Date,
-                    Price = tradePrice,
-                    Quantity = sharesOwned,
-                    CashBalance = cash,
-                    PortfolioValue = cash
-                });
-
-                sharesOwned = 0;
-            }
+            sharesOwned = 0;
         }
-
-        return Task.CompletedTask;
-    }
-
-    private static (int WinningTrades, int LosingTrades, decimal WinRate, decimal ProfitFactor) CalculateTradeStatistics(IReadOnlyList<SimulatedTradeDto> trades)
-    {
-        int wins = 0;
-        int losses = 0;
-
-        decimal grossProfit = 0;
-        decimal grossLoss = 0;
-
-        for (int i = 1; i < trades.Count; i++)
-        {
-            SimulatedTradeDto previous =
-                trades[i - 1];
-
-            SimulatedTradeDto current =
-                trades[i];
-
-            if (previous.Action != "BUY" ||
-                current.Action != "SELL")
-                continue;
-
-            decimal pnl = (current.Price - previous.Price) * previous.Quantity;
-
-            if (pnl >= 0)
-            {
-                wins++;
-                grossProfit += pnl;
-            }
-            else
-            {
-                losses++;
-                grossLoss += Math.Abs(pnl);
-            }
-        }
-
-        int totalTrades = wins + losses;
-
-        decimal winRate = totalTrades == 0 ? 0 : (decimal)wins / totalTrades * 100m;
-
-        decimal profitFactor = grossLoss == 0 ? grossProfit
-            : grossProfit / grossLoss;
-
-        return (wins, losses, winRate, profitFactor);
     }
 }

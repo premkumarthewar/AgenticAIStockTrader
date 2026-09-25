@@ -11,6 +11,7 @@ using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Backtesting;
 using StockTrader.AI.Backtesting.Interfaces;
+using StockTrader.AI.Backtesting.Strategies;
 using StockTrader.AI.Kernel;
 using StockTrader.AI.Memory;
 using StockTrader.AI.Options;
@@ -50,8 +51,12 @@ public static class DependencyInjection
             return Microsoft.SemanticKernel.Kernel.CreateBuilder().AddOpenAIChatCompletion(modelId: options.Model, apiKey: options.ApiKey).Build();
         });
 
-        // IChatCompletionService is only registered inside the Kernel's internal service provider, not in the app's DI container. MemorySummarizer (and anything else that asks for IChatCompletionService directly) needs it exposed here too, otherwise ASP.NET Core's service-validation at startup throws.
-        services.AddSingleton(serviceProvider => serviceProvider.GetRequiredService<Microsoft.SemanticKernel.Kernel>().GetRequiredService<IChatCompletionService>());
+        // IChatCompletionService is only registered inside the Kernel's internal service
+        // provider, not in the app's DI container. MemorySummarizer (and anything else
+        // that asks for IChatCompletionService directly) needs it exposed here too,
+        // otherwise ASP.NET Core's service-validation at startup throws.
+        services.AddSingleton(serviceProvider =>
+            serviceProvider.GetRequiredService<Microsoft.SemanticKernel.Kernel>().GetRequiredService<IChatCompletionService>());
 
         //3. Agent Context
         services.AddScoped<AgentContext>(serviceProvider =>
@@ -99,6 +104,11 @@ public static class DependencyInjection
 
         //9. Application Services
         services.AddScoped<ITradingAdvisorService, TradingAdvisorService>();
+
+        // Deterministic, rule-based strategy used only by the backtesting engine (fast
+        // and free to run over long date ranges), independent from the live AI agent
+        // pipeline used by ITradingAdvisorService.
+        services.AddScoped<IBacktestStrategy, MovingAverageCrossoverStrategy>();
 
         services.AddScoped<IBacktestingEngine, BacktestingEngine>();
 
