@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using StockTrader.AI.Agents.Base;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Prompts;
+using StockTrader.AI.Scoring;
 using StockTrader.Application.AI.Dtos;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Shared.Results;
@@ -64,9 +65,18 @@ public sealed class TradingDecisionAgent(AgentContext context, IMemoryService me
             if (decision.TargetBuyPrice.HasValue && decision.TargetSellPrice.HasValue && decision.TargetSellPrice <= decision.TargetBuyPrice)
                 return Result<TradingDecisionDto>.Failure(new Error("InvalidResponse", "Target sell price must be greater than target buy price."));
 
+            (int recommendationScore, string rating) = RecommendationScoreCalculator.Calculate(
+                decision.Decision,
+                decision.Confidence,
+                decision.RiskLevel,
+                decision.SupportingFactors.Count,
+                decision.RiskFactors.Count);
+
             return Result<TradingDecisionDto>.Success(decision with
             {
-                Symbol = normalizedSymbol
+                Symbol = normalizedSymbol,
+                RecommendationScore = recommendationScore,
+                Rating = rating
             });
         }
         catch (JsonException ex)
