@@ -1,4 +1,7 @@
 using StockTrader.AI;
+using StockTrader.Api.BackgroundServices;
+using StockTrader.Api.Configurations;
+using StockTrader.Api.Hubs;
 using StockTrader.Api.Middleware;
 using StockTrader.Application;
 using StockTrader.Infrastructure;
@@ -16,13 +19,18 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Global exception handling: any unhandled exception is converted into a consistent ProblemDetails JSON by GlobalExceptionHandler instead of crashing the request or leaking a raw stack trace to the client.
+// Global exception handling: any unhandled exception is converted into a
+// consistent ProblemDetails JSON response by GlobalExceptionHandler instead
+// of crashing the request or leaking a raw stack trace to the client.
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
 builder.Services.AddProblemDetails();
 
-// CORS: allowed origins come from configuration Cors:AllowedOrigins in appsettings.json / appsettings.{Environment}.json) so the frontend's origin can be set per-environment without a code change. No origins configured means no cross-origin requests are allowed.
-string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+// CORS: allowed origins come from configuration (Cors:AllowedOrigins in
+// appsettings.json / appsettings.{Environment}.json) so the frontend's origin
+// can be set per-environment without a code change. No origins configured
+// means no cross-origin requests are allowed.
+string[] allowedOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
 {
@@ -43,6 +51,15 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddArtificialIntelligence(builder.Configuration);
 
 builder.Services.AddPersistence(builder.Configuration);
+
+// Live market monitoring: a background service polls the persisted watchlist and
+// pushes any price alerts to connected clients over SignalR.
+builder.Services.Configure<MarketMonitoringOptions>(
+    builder.Configuration.GetSection(MarketMonitoringOptions.SectionName));
+
+builder.Services.AddSignalR();
+
+builder.Services.AddHostedService<MarketMonitoringBackgroundService>();
 
 WebApplication app = builder.Build();
 
@@ -68,6 +85,8 @@ app.UseCors(CorsPolicyName);
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<MarketMonitoringHub>("/hubs/market-monitoring");
 
 var summaries = new[]
 {

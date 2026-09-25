@@ -16,6 +16,10 @@ namespace StockTrader.Persistence.Context
 
         public DbSet<PaperTrade> PaperTrades => Set<PaperTrade>();
 
+        public DbSet<WatchlistItem> WatchlistItems => Set<WatchlistItem>();
+
+        public DbSet<MonitoringAlert> MonitoringAlerts => Set<MonitoringAlert>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

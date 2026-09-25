@@ -4,6 +4,7 @@ using StockTrader.AI.Agents.Interfaces;
 using StockTrader.AI.Prompts;
 using StockTrader.AI.Scoring;
 using StockTrader.Application.AI.Dtos;
+using StockTrader.Application.Common;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Application.MarketData.Dtos;
 using StockTrader.Shared.Results;
@@ -32,23 +33,15 @@ public class WatchlistAgent(Microsoft.SemanticKernel.Kernel kernel, IStockMarket
 
                 decimal changePercent = quote.Value.PercentChange;
 
-                if (changePercent >= 5)
+                string? alertType = PriceAlertEvaluator.Evaluate(changePercent);
+
+                if (alertType is not null)
                 {
                     alerts.Add(new AlertDto
                     {
                         Symbol = symbol,
-                        AlertType = "PRICE_SURGE",
-                        Message = $"Price increased by {changePercent:F2}%",
-                        TriggeredAt = DateTime.UtcNow,
-                    });
-                }
-                else if (changePercent <= -5)
-                {
-                    alerts.Add(new AlertDto
-                    {
-                        Symbol = symbol,
-                        AlertType = "PRICE_DROP",
-                        Message = $"Price decreased by {changePercent:F2}%",
+                        AlertType = alertType,
+                        Message = PriceAlertEvaluator.BuildMessage(alertType, changePercent),
                         TriggeredAt = DateTime.UtcNow
                     });
                 }

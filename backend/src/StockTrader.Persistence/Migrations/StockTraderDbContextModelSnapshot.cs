@@ -44,6 +44,37 @@ namespace StockTrader.Persistence.Migrations
                     b.ToTable("MemorySummaries");
                 });
 
+            modelBuilder.Entity("StockTrader.Domain.Entities.MonitoringAlert", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AlertType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTime>("TriggeredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TriggeredAtUtc");
+
+                    b.ToTable("MonitoringAlerts", (string)null);
+                });
+
             modelBuilder.Entity("StockTrader.Domain.Entities.PaperPortfolio", b =>
                 {
                     b.Property<Guid>("Id")
@@ -178,6 +209,28 @@ namespace StockTrader.Persistence.Migrations
                     b.HasIndex("Symbol");
 
                     b.ToTable("TradingMemories", (string)null);
+                });
+
+            modelBuilder.Entity("StockTrader.Domain.Entities.WatchlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Symbol")
+                        .IsUnique();
+
+                    b.ToTable("WatchlistItems", (string)null);
                 });
 
             modelBuilder.Entity("StockTrader.Domain.Entities.PaperPosition", b =>
