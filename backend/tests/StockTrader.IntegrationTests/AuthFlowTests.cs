@@ -4,14 +4,9 @@ using StockTrader.Application.Auth.Dtos;
 
 namespace StockTrader.IntegrationTests;
 
-public class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
+public class AuthFlowTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient _client;
-
-    public AuthFlowTests(CustomWebApplicationFactory factory)
-    {
-        _client = factory.CreateClient();
-    }
+    private readonly HttpClient _client = factory.CreateClient();
 
     private static RegisterRequestDto NewRegistration() => new()
     {

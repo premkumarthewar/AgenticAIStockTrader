@@ -2,14 +2,9 @@ using System.Net;
 
 namespace StockTrader.IntegrationTests;
 
-public class HealthCheckEndpointsTests : IClassFixture<CustomWebApplicationFactory>
+public class HealthCheckEndpointsTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient _client;
-
-    public HealthCheckEndpointsTests(CustomWebApplicationFactory factory)
-    {
-        _client = factory.CreateClient();
-    }
+    private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
     public async Task Live_ReturnsOk_AndRequiresNoAuthentication()
