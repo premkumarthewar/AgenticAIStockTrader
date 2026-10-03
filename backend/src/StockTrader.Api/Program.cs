@@ -1,15 +1,39 @@
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
 using StockTrader.AI;
 using StockTrader.Api.BackgroundServices;
 using StockTrader.Api.Configurations;
+using StockTrader.Api.Extensions;
+using StockTrader.Api.HealthChecks;
 using StockTrader.Api.Hubs;
 using StockTrader.Api.Middleware;
+using StockTrader.Api.Services;
 using StockTrader.Application;
+using StockTrader.Application.Common.Interfaces;
 using StockTrader.Infrastructure;
 using StockTrader.Persistence;
 
 const string CorsPolicyName = "StockTraderCorsPolicy";
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Structured logging: Serilog replaces the default Microsoft.Extensions.Logging console
+// provider entirely, reading its sinks/levels from the "Serilog" section of
+// appsettings.json (ReadFrom.Configuration) so behavior differs by environment without a
+// code change. ReadFrom.Services lets sinks/enrichers registered in DI (none today) be
+// picked up automatically; Enrich.FromLogContext lets ad-hoc LogContext.PushProperty
+// scopes flow into every log event within them.
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext());
 
 builder.Services.AddControllers();
 
@@ -46,6 +70,58 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Authentication/authorization: JWT bearer tokens issued by AuthService (Persistence),
+// validated here against the same "Jwt" configuration section. See
+// Extensions/JwtAuthenticationExtensions.cs. AddJwtAuthentication also registers
+// AddAuthorization, so every [Authorize] attribute in the API is backed by this scheme.
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Health checks: "live" answers "is the process up" (no external dependency, always
+// fast); "ready" additionally verifies the database is reachable, since a pod that's
+// running but can't reach SQL Server shouldn't be sent traffic by an orchestrator.
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Missing required 'ConnectionStrings:DefaultConnection' configuration.");
+
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString, name: "sql-server", tags: ["ready"])
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
+
+// Distributed tracing/metrics via OpenTelemetry. With no "Telemetry:OtlpEndpoint"
+// configured (the default in every environment today) spans/metrics go to the console
+// exporter, which is enough to see that instrumentation is wired correctly without
+// standing up a collector; setting that config value switches to OTLP export instead.
+TelemetryOptions telemetryOptions = builder.Configuration.GetSection(TelemetryOptions.SectionName).Get<TelemetryOptions>()
+    ?? new TelemetryOptions();
+
+bool useOtlpExporter = !string.IsNullOrWhiteSpace(telemetryOptions.OtlpEndpoint);
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName: telemetryOptions.ServiceName))
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation();
+        tracing.AddHttpClientInstrumentation();
+
+        if (useOtlpExporter)
+            tracing.AddOtlpExporter(otlp => otlp.Endpoint = new Uri(telemetryOptions.OtlpEndpoint!));
+        else
+            tracing.AddConsoleExporter();
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+        metrics.AddHttpClientInstrumentation();
+        metrics.AddRuntimeInstrumentation();
+
+        if (useOtlpExporter)
+            metrics.AddOtlpExporter(otlp => otlp.Endpoint = new Uri(telemetryOptions.OtlpEndpoint!));
+        else
+            metrics.AddConsoleExporter();
+    });
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddArtificialIntelligence(builder.Configuration);
@@ -66,6 +142,11 @@ WebApplication app = builder.Build();
 // Registered first so it can catch exceptions thrown by any middleware below it.
 app.UseExceptionHandler();
 
+// Every request logged as one structured event (method, path, status code, elapsed time,
+// plus anything already in the Serilog LogContext) rather than the several
+// framework-internal log lines ASP.NET Core would otherwise emit per request.
+app.UseSerilogRequestLogging();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -82,11 +163,29 @@ app.UseHttpsRedirection();
 
 app.UseCors(CorsPolicyName);
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.MapHub<MarketMonitoringHub>("/hubs/market-monitoring");
+
+// Health endpoints are deliberately anonymous - an orchestrator's liveness/readiness
+// probe carries no bearer token - and split by tag so a slow/unreachable database only
+// ever fails readiness, never liveness (which would otherwise cause an unnecessary
+// container restart for a problem a restart can't fix).
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live"),
+    ResponseWriter = HealthCheckResponseWriter.WriteAsync
+}).AllowAnonymous();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = HealthCheckResponseWriter.WriteAsync
+}).AllowAnonymous();
 
 var summaries = new[]
 {
@@ -113,3 +212,9 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+// Exposed so WebApplicationFactory<Program> (used by integration tests) can discover
+// this entry point - top-level statements generate an internal Program class by default,
+// which a test project in a different assembly can't reference otherwise.
+[ExcludeFromCodeCoverage]
+public partial class Program;

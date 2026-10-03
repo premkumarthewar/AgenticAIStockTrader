@@ -6,5 +6,5 @@ namespace StockTrader.AI;
 
 public interface ITradingOrchestrator
 {
-    Task<Result<TradingDecisionDto>> AnalyzeAsync(AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default);
+    Task<Result<TradingDecisionDto>> AnalyzeAsync(Guid userId, AnalyzeStockRequest analyzeStockRequest, CancellationToken cancellationToken = default);
 }

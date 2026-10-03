@@ -13,6 +13,7 @@ public sealed class PaperTradingEngine(
     IStockMarketService stockMarketService) : IPaperTradingEngine
 {
     public async Task<Result<PaperPortfolioDto>> ExecuteTradeAsync(
+        Guid userId,
         PaperTradeRequestDto request,
         CancellationToken cancellationToken = default)
     {
@@ -36,7 +37,7 @@ public sealed class PaperTradingEngine(
             return Result<PaperPortfolioDto>.Failure(new Error("BadRequest", "Price must be greater than zero."));
 
         PaperPortfolio? portfolio =
-            await persistence.GetPortfolioAsync(cancellationToken);
+            await persistence.GetPortfolioAsync(userId, cancellationToken);
 
         if (portfolio is null)
         {
@@ -146,9 +147,10 @@ public sealed class PaperTradingEngine(
     }
 
     public async Task<Result<PaperPortfolioDto>> GetPortfolioAsync(
+        Guid userId,
         CancellationToken cancellationToken = default)
     {
-        PaperPortfolio? portfolio = await persistence.GetPortfolioAsync(cancellationToken);
+        PaperPortfolio? portfolio = await persistence.GetPortfolioAsync(userId, cancellationToken);
 
         if (portfolio is null)
         {
@@ -161,14 +163,14 @@ public sealed class PaperTradingEngine(
             cancellationToken);
     }
 
-    public async Task<Result<PaperPositionDto>> GetPositionAsync(string symbol, CancellationToken cancellationToken = default)
+    public async Task<Result<PaperPositionDto>> GetPositionAsync(Guid userId, string symbol, CancellationToken cancellationToken = default)
     {
         string normalizedSymbol = symbol.Trim().ToUpperInvariant();
 
         if (string.IsNullOrWhiteSpace(normalizedSymbol))
             return Result<PaperPositionDto>.Failure(new Error("BadRequest", "Symbol is required."));
 
-        PaperPortfolio? portfolio = await persistence.GetPortfolioAsync(cancellationToken);
+        PaperPortfolio? portfolio = await persistence.GetPortfolioAsync(userId, cancellationToken);
 
         if (portfolio is null)
             return Result<PaperPositionDto>.Failure(new Error("InternalServerError", "Paper trading portfolio has not been initialized."));

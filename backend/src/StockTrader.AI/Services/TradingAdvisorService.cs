@@ -1,6 +1,8 @@
 ﻿using StockTrader.AI.Agents.Factory;
 using StockTrader.AI.Agents.Interfaces;
 using StockTrader.Application.AI.Dtos;
+using StockTrader.Application.Approvals.Dtos;
+using StockTrader.Application.Approvals.Interfaces;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Application.PaperTrading.Dtos;
 using StockTrader.Application.PaperTrading.Interfaces;
@@ -14,14 +16,14 @@ using System.Text.Json;
 
 namespace StockTrader.AI.Services;
 
-public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator, IMemoryService memoryService, IMemorySummarizer memorySummarizer, IRiskManagementService riskManagementService, IPaperTradingService paperTradingService) : ITradingAdvisorService
+public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestrator tradingOrchestrator, IMemoryService memoryService, IMemorySummarizer memorySummarizer, IRiskManagementService riskManagementService, IPaperTradingService paperTradingService, ITradeApprovalService tradeApprovalService) : ITradingAdvisorService
 {
-    public async Task<Result<TradingDecisionDto>> AnalyzeAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<TradingDecisionDto>> AnalyzeAsync(Guid userId, AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Symbol))
             return Result<TradingDecisionDto>.Failure(new Error("BadRequest", "Stock symbol is required."));
 
-        Result<TradingDecisionDto> tradingDecision = await tradingOrchestrator.AnalyzeAsync(request, cancellationToken);
+        Result<TradingDecisionDto> tradingDecision = await tradingOrchestrator.AnalyzeAsync(userId, request, cancellationToken);
 
         if (tradingDecision.IsFailure)
             return tradingDecision;
@@ -30,7 +32,7 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
 
         PaperPortfolioDto? portfolio = null;
 
-        Result<PaperPortfolioDto> portfolioResult = await paperTradingService.GetPortfolioAsync(cancellationToken);
+        Result<PaperPortfolioDto> portfolioResult = await paperTradingService.GetPortfolioAsync(userId, cancellationToken);
 
         if (portfolioResult.IsSuccess)
             portfolio = portfolioResult.Value;
@@ -75,16 +77,48 @@ public class TradingAdvisorService(IAgentFactory agentFactory, ITradingOrchestra
         return Result<TradingDecisionDto>.Success(decision);
     }
 
-    public async Task<Result<ExecutionResultDto>> AnalyzeAndExecuteAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<ExecutionResultDto>> AnalyzeAndExecuteAsync(Guid userId, AnalyzeStockRequest request, CancellationToken cancellationToken = default)
     {
-        Result<TradingDecisionDto> decisionResult = await AnalyzeAsync(request, cancellationToken);
+        Result<TradingDecisionDto> decisionResult = await AnalyzeAsync(userId, request, cancellationToken);
 
         if (decisionResult.IsFailure)
             return Result<ExecutionResultDto>.Failure(decisionResult.Error);
 
         IExecutionAgent executionAgent = agentFactory.CreateExecutionAgent();
 
-        return await executionAgent.ExecuteAsync(decisionResult.Value, cancellationToken);
+        return await executionAgent.ExecuteAsync(userId, decisionResult.Value, cancellationToken);
+    }
+
+    public async Task<Result<TradeApprovalDto>> AnalyzeAndRequestApprovalAsync(Guid userId, AnalyzeStockRequest request, BrokerProvider brokerProvider, CancellationToken cancellationToken = default)
+    {
+        Result<TradingDecisionDto> decisionResult = await AnalyzeAsync(userId, request, cancellationToken);
+
+        if (decisionResult.IsFailure)
+            return Result<TradeApprovalDto>.Failure(decisionResult.Error);
+
+        TradingDecisionDto decision = decisionResult.Value;
+
+        string action = decision.Decision.Trim().ToUpperInvariant();
+
+        if (action is not ("BUY" or "SELL"))
+        {
+            return Result<TradeApprovalDto>.Success(new TradeApprovalDto
+            {
+                Id = Guid.Empty,
+                Symbol = decision.Symbol,
+                Action = action,
+                Quantity = decision.RecommendedQuantity,
+                TargetPrice = decision.TargetBuyPrice ?? decision.TargetSellPrice ?? 0m,
+                Confidence = decision.Confidence,
+                RiskLevel = decision.RiskLevel,
+                Reasoning = decision.Reasoning,
+                BrokerProvider = brokerProvider.ToString(),
+                Status = "NotRequired",
+                RequestedOnUtc = DateTime.UtcNow
+            });
+        }
+
+        return await tradeApprovalService.RequestApprovalAsync(decision, brokerProvider, cancellationToken);
     }
 
     public async Task<Result<AnalyzeStockResponse>> AnalyzeMarketAsync(AnalyzeStockRequest request, CancellationToken cancellationToken = default)

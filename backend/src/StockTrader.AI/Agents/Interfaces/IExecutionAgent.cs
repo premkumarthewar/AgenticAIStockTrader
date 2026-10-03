@@ -9,6 +9,7 @@ namespace StockTrader.AI.Agents.Interfaces;
 public interface IExecutionAgent
 {
     Task<Result<ExecutionResultDto>> ExecuteAsync(
+        Guid userId,
         TradingDecisionDto decision,
         CancellationToken cancellationToken = default);
 }

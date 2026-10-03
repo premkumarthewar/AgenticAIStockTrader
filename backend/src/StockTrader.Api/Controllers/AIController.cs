@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StockTrader.Application.AI.Dtos;
+using StockTrader.Application.Approvals.Dtos;
 using StockTrader.Application.Backtesting.Dtos;
 using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
@@ -7,20 +9,26 @@ using StockTrader.Application.PaperTrading.Dtos;
 using StockTrader.Application.PaperTrading.Interfaces;
 using StockTrader.Contracts.Requests;
 using StockTrader.Contracts.Responses;
+using StockTrader.Domain.Entities;
 using StockTrader.Shared.Results;
 
 namespace StockTrader.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktestingService backtestingService, IPaperTradingService paperTradingService) : ControllerBase
+[Authorize]
+public class AIController(
+    ITradingAdvisorService tradingAdvisorService,
+    IBacktestingService backtestingService,
+    IPaperTradingService paperTradingService,
+    ICurrentUserService currentUserService) : ControllerBase
 {
     [HttpGet("decision")]
     [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<TradingDecisionDto>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Decision([FromQuery] AnalyzeStockRequest request, CancellationToken cancellationToken)
     {
-        Result<TradingDecisionDto> result = await tradingAdvisorService.AnalyzeAsync(request, cancellationToken);
+        Result<TradingDecisionDto> result = await tradingAdvisorService.AnalyzeAsync(currentUserService.UserId, request, cancellationToken);
 
         if (result.IsFailure)
             return BadRequest(result.Error);
@@ -33,7 +41,28 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     [ProducesResponseType(typeof(Result<ExecutionResultDto>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ExecuteDecision([FromQuery] AnalyzeStockRequest request, CancellationToken cancellationToken)
     {
-        Result<ExecutionResultDto> result = await tradingAdvisorService.AnalyzeAndExecuteAsync(request, cancellationToken);
+        Result<ExecutionResultDto> result = await tradingAdvisorService.AnalyzeAndExecuteAsync(currentUserService.UserId, request, cancellationToken);
+
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Runs the same analysis as GET decision, but for a BUY/SELL decision opens a
+    /// Pending TradeApproval instead of executing anything. See ApprovalsController for
+    /// approving/rejecting it and for how an approval reaches the broker.
+    /// </summary>
+    [HttpPost("decision/request-approval")]
+    [ProducesResponseType(typeof(Result<TradeApprovalDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<TradeApprovalDto>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RequestApproval(
+        [FromQuery] AnalyzeStockRequest request,
+        [FromQuery] BrokerProvider brokerProvider = BrokerProvider.Alpaca,
+        CancellationToken cancellationToken = default)
+    {
+        Result<TradeApprovalDto> result = await tradingAdvisorService.AnalyzeAndRequestApprovalAsync(currentUserService.UserId, request, brokerProvider, cancellationToken);
 
         if (result.IsFailure)
             return BadRequest(result.Error);
@@ -118,6 +147,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     {
         Result<PaperPortfolioDto> result =
             await paperTradingService.ExecuteTradeAsync(
+                currentUserService.UserId,
                 request,
                 cancellationToken);
 
@@ -135,6 +165,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     {
         Result<PaperPortfolioDto> result =
             await paperTradingService.GetPortfolioAsync(
+                currentUserService.UserId,
                 cancellationToken);
 
         if (result.IsFailure)
@@ -152,6 +183,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     {
         Result<PaperPositionDto> result =
             await paperTradingService.GetPositionAsync(
+                currentUserService.UserId,
                 symbol,
                 cancellationToken);
 
@@ -166,7 +198,7 @@ public class AIController(ITradingAdvisorService tradingAdvisorService, IBacktes
     [FromQuery] decimal initialCapital,
     CancellationToken cancellationToken)
     {
-        Result<PaperPortfolioDto> result = await paperTradingService.InitializePortfolioAsync(initialCapital, cancellationToken);
+        Result<PaperPortfolioDto> result = await paperTradingService.InitializePortfolioAsync(currentUserService.UserId, initialCapital, cancellationToken);
 
         if (result.IsFailure)
             return BadRequest(result.Error);

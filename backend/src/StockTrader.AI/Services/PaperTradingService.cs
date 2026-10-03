@@ -8,39 +8,40 @@ namespace StockTrader.AI.Services;
 
 public sealed class PaperTradingService(IPaperTradingEngine paperTradingEngine, IPaperTradingPersistence persistence) : IPaperTradingService
 {
-    public Task<Result<PaperPortfolioDto>> ExecuteTradeAsync(PaperTradeRequestDto request, CancellationToken cancellationToken = default)
+    public Task<Result<PaperPortfolioDto>> ExecuteTradeAsync(Guid userId, PaperTradeRequestDto request, CancellationToken cancellationToken = default)
     {
-        return paperTradingEngine.ExecuteTradeAsync(request, cancellationToken);
+        return paperTradingEngine.ExecuteTradeAsync(userId, request, cancellationToken);
     }
 
-    public Task<Result<PaperPortfolioDto>> GetPortfolioAsync(CancellationToken cancellationToken = default)
+    public Task<Result<PaperPortfolioDto>> GetPortfolioAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return paperTradingEngine.GetPortfolioAsync(cancellationToken);
+        return paperTradingEngine.GetPortfolioAsync(userId, cancellationToken);
     }
 
     public Task<Result<PaperPositionDto>> GetPositionAsync(
-        string symbol, CancellationToken cancellationToken = default)
+        Guid userId, string symbol, CancellationToken cancellationToken = default)
     {
-        return paperTradingEngine.GetPositionAsync(symbol, cancellationToken);
+        return paperTradingEngine.GetPositionAsync(userId, symbol, cancellationToken);
     }
 
-    public async Task<Result<PaperPortfolioDto>> InitializePortfolioAsync(decimal initialCapital, CancellationToken cancellationToken = default)
+    public async Task<Result<PaperPortfolioDto>> InitializePortfolioAsync(Guid userId, decimal initialCapital, CancellationToken cancellationToken = default)
     {
         if (initialCapital <= 0)
         {
             return Result<PaperPortfolioDto>.Failure(new Error("BadRequest", "Initial capital must be greater than zero."));
         }
 
-        PaperPortfolio? existingPortfolio = await persistence.GetPortfolioAsync(cancellationToken);
+        PaperPortfolio? existingPortfolio = await persistence.GetPortfolioAsync(userId, cancellationToken);
 
         if (existingPortfolio is not null)
-            return Result<PaperPortfolioDto>.Failure(new Error("InternalServerError", "Paper trading portfolio has already been initialized."));
+            return Result<PaperPortfolioDto>.Failure(new Error("InternalServerError", "This user's paper trading portfolio has already been initialized."));
 
         DateTime now = DateTime.UtcNow;
 
         PaperPortfolio portfolio = new()
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             InitialCapital = initialCapital,
             CashBalance = initialCapital,
             CreatedOnUtc = now,

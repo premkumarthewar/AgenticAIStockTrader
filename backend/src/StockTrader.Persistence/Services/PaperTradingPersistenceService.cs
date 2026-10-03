@@ -8,12 +8,12 @@ namespace StockTrader.Persistence.Services;
 public sealed class PaperTradingPersistenceService(
     StockTraderDbContext dbContext) : IPaperTradingPersistence
 {
-    public async Task<PaperPortfolio?> GetPortfolioAsync(CancellationToken cancellationToken = default)
+    public async Task<PaperPortfolio?> GetPortfolioAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await dbContext.PaperPortfolios
             .Include(x => x.Positions)
             .Include(x => x.Trades)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
     }
 
     public async Task<PaperPosition?> GetPositionAsync(Guid portfolioId, string symbol, CancellationToken cancellationToken = default)

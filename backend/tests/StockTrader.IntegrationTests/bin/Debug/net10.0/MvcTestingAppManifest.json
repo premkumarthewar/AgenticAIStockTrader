@@ -1,0 +1,10 @@
+{
+  "StockTrader.AI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.AI",
+  "StockTrader.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Api",
+  "StockTrader.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Application",
+  "StockTrader.Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Contracts",
+  "StockTrader.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Domain",
+  "StockTrader.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Infrastructure",
+  "StockTrader.Persistence, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Persistence",
+  "StockTrader.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\Projects\\AutoGenBasedStockTradingApp\\AgenticAIStockTrader\\backend\\src\\StockTrader.Shared"
+}

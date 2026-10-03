@@ -25,6 +25,9 @@ using StockTrader.AI.Plugins.Quotes;
 using StockTrader.AI.RiskManagement;
 using StockTrader.AI.RiskManagement.Interfaces;
 using StockTrader.AI.Services;
+using StockTrader.AI.TradeExecution;
+using StockTrader.AI.TradeExecution.Interfaces;
+using StockTrader.Application.Approvals.Interfaces;
 using StockTrader.Application.Backtesting.Interfaces;
 using StockTrader.Application.Common.Interfaces;
 using StockTrader.Application.PaperTrading.Interfaces;
@@ -120,6 +123,11 @@ public static class DependencyInjection
         services.AddScoped<IRiskEngine, RiskEngine>();
 
         services.AddScoped<IRiskManagementService, RiskManagementService>();
+
+        //10. Human approval + broker execution
+        services.AddScoped<IBrokerTradeExecutor, BrokerTradeExecutor>();
+
+        services.AddScoped<ITradeApprovalService, TradeApprovalService>();
 
         return services;
     }

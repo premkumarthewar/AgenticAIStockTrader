@@ -10,4 +10,8 @@
     <Project Path="src/StockTrader.Persistence/StockTrader.Persistence.csproj" />
     <Project Path="src/StockTrader.Shared/StockTrader.Shared.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StockTrader.UnitTests/StockTrader.UnitTests.csproj" />
+    <Project Path="tests/StockTrader.IntegrationTests/StockTrader.IntegrationTests.csproj" />
+  </Folder>
 </Solution>

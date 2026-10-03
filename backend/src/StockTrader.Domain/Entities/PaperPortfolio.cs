@@ -4,6 +4,13 @@ public sealed class PaperPortfolio
 {
     public Guid Id { get; set; }
 
+    /// <summary>
+    /// The owning user's id (ApplicationUser.Id). A plain Guid rather than a navigation
+    /// property, so Domain has no dependency on Persistence's Identity types - exactly
+    /// one portfolio per user is enforced by a unique index in PaperPortfolioConfiguration.
+    /// </summary>
+    public Guid UserId { get; set; }
+
     public decimal InitialCapital { get; set; }
 
     public decimal CashBalance { get; set; }

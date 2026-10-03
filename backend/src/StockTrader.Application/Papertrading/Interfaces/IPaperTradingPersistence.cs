@@ -4,7 +4,7 @@ namespace StockTrader.Application.PaperTrading.Interfaces;
 
 public interface IPaperTradingPersistence
 {
-    Task<PaperPortfolio?> GetPortfolioAsync(CancellationToken cancellationToken = default);
+    Task<PaperPortfolio?> GetPortfolioAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<PaperPosition?> GetPositionAsync(Guid portfolioId, string symbol, CancellationToken cancellationToken = default);
 

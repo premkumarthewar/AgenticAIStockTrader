@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch: {}
+
+# Cancel any in-progress run for the same branch/PR when a new commit is pushed, so only
+# the latest commit's build/test run actually finishes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    # Every project (StockTrader.slnx, src/, tests/) lives under backend/, one level below
+    # this .github/ folder's own repo root.
+    working-directory: backend
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # global.json (under backend/) pins the exact SDK feature band this solution is
+      # built against, so setup-dotnet installs a matching version rather than whatever
+      # happens to be preinstalled on the runner image.
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+
+      - name: Restore
+        run: dotnet restore StockTrader.slnx
+
+      - name: Build
+        run: dotnet build StockTrader.slnx --configuration Release --no-restore
+
+      # Unit + integration tests both run here - IntegrationTests uses EF Core's InMemory
+      # provider (see tests/StockTrader.IntegrationTests/CustomWebApplicationFactory.cs),
+      # so no SQL Server instance or other external dependency needs to be stood up for
+      # this job to be self-contained.
+      - name: Test
+        run: >
+          dotnet test StockTrader.slnx
+          --configuration Release
+          --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: backend/TestResults/*.trx
+          retention-days: 14

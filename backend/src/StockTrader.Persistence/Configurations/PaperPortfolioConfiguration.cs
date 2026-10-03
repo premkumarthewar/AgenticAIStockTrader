@@ -12,6 +12,11 @@ public sealed class PaperPortfolioConfiguration : IEntityTypeConfiguration<Paper
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.UserId).IsRequired();
+
+        // One paper-trading portfolio per user.
+        builder.HasIndex(x => x.UserId).IsUnique();
+
         builder.Property(x => x.InitialCapital).HasPrecision(18, 2);
 
         builder.Property(x => x.CashBalance).HasPrecision(18, 2);

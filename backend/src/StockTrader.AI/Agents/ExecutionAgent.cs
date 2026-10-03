@@ -19,6 +19,7 @@ public sealed class ExecutionAgent(
     IStockMarketService stockMarketService) : IExecutionAgent
 {
     public async Task<Result<ExecutionResultDto>> ExecuteAsync(
+        Guid userId,
         TradingDecisionDto decision,
         CancellationToken cancellationToken = default)
     {
@@ -67,7 +68,7 @@ public sealed class ExecutionAgent(
             Price = price
         };
 
-        Result<PaperPortfolioDto> tradeResult = await paperTradingService.ExecuteTradeAsync(tradeRequest, cancellationToken);
+        Result<PaperPortfolioDto> tradeResult = await paperTradingService.ExecuteTradeAsync(userId, tradeRequest, cancellationToken);
 
         if (tradeResult.IsFailure)
             return NotExecuted(decision.Symbol, action, $"Trade could not be executed: {tradeResult.Error.Message}");

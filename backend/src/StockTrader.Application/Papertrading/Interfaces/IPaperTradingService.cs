@@ -5,11 +5,11 @@ namespace StockTrader.Application.PaperTrading.Interfaces;
 
 public interface IPaperTradingService
 {
-    Task<Result<PaperPortfolioDto>> ExecuteTradeAsync(PaperTradeRequestDto request, CancellationToken cancellationToken = default);
+    Task<Result<PaperPortfolioDto>> ExecuteTradeAsync(Guid userId, PaperTradeRequestDto request, CancellationToken cancellationToken = default);
 
-    Task<Result<PaperPortfolioDto>> GetPortfolioAsync(CancellationToken cancellationToken = default);
+    Task<Result<PaperPortfolioDto>> GetPortfolioAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    Task<Result<PaperPositionDto>> GetPositionAsync(string symbol, CancellationToken cancellationToken = default);
+    Task<Result<PaperPositionDto>> GetPositionAsync(Guid userId, string symbol, CancellationToken cancellationToken = default);
 
-    Task<Result<PaperPortfolioDto>> InitializePortfolioAsync(decimal initialCapital, CancellationToken cancellationToken = default);
+    Task<Result<PaperPortfolioDto>> InitializePortfolioAsync(Guid userId, decimal initialCapital, CancellationToken cancellationToken = default);
 }
